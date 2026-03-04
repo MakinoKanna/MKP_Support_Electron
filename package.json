@@ -1,85 +1,22 @@
 {
-  "name": "mkp_support_fastui",
+  "name": "mkp-support",
   "version": "1.0.0",
-  "description": "A modern Web UI for [MKP Support](https://github.com/YZcat2023/MKPSupport), built with FastAPI and Vanilla JS.",
+  "description": "支撑面改善工具 (MKP Support)",
   "main": "main.js",
   "scripts": {
+    "dev": "electron .",
     "start": "electron .",
-    "build": "electron-builder"
+    "build": "electron-packager . MKP_Support --platform=win32 --arch=x64 --out=dist-electron --overwrite"
   },
-  "build": {
-    "appId": "com.mkpsupport.app",
-    "productName": "MKP Support",
-    "directories": {
-      "output": "dist"
-    },
-    "win": {
-      "target": [
-        {
-          "target": "nsis",
-          "arch": [
-            "x64"
-          ]
-        }
-      ],
-      "icon": "static/images/a1.ico",
-      "asar": true,
-      "files": [
-        "!**/locales/**",
-        "!**/node_modules/**",
-        "!**/external/**"
-      ]
-    },
-    "nsis": {
-      "oneClick": true,
-      "perMachine": false,
-      "allowElevation": true,
-      "allowToChangeInstallationDirectory": false,
-      "installerIcon": "static/images/a1.ico",
-      "uninstallerIcon": "static/images/a1.ico",
-      "installerHeaderIcon": "static/images/a1.ico",
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
-      "shortcutName": "MKP Support",
-      "deleteAppDataOnUninstall": true,
-      "include": "installer.nsh"
-    },
-    "files": [
-      "main.js",
-      "preload.js",
-      "templates/**/*",
-      "static/**/*",
-      "data/**/*",
-      "mkp_processor/**/*",
-      "presets/**/*"
-    ],
-    "extraResources": [
-      {
-        "from": "data",
-        "to": "data"
-      },
-      {
-        "from": "presets",
-        "to": "presets"
-      }
-    ],
-    "compression": "maximum",
-    "asarUnpack": []
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/MakinoKanna/MKP-Support-FASTUI.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/MakinoKanna/MKP-Support-FASTUI/issues"
-  },
-  "homepage": "https://github.com/MakinoKanna/MKP-Support-FASTUI#readme",
   "devDependencies": {
-    "electron": "^40.6.1",
-    "electron-builder": "^26.8.1",
-    "electron-packager": "^17.1.2"
-  }
+    "electron": "^25.0.0",
+    "electron-packager": "^17.1.1"
+  },
+  "keywords": [
+    "3d printing",
+    "support",
+    "calibration"
+  ],
+  "author": "MakinoKanna",
+  "license": "MIT"
 }
