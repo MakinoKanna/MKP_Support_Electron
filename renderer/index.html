@@ -26,22 +26,22 @@
         <p class="text-[11px] text-gray-400 mt-0.5">MKP Support</p>
       </div>
 
-      <div class="flex items-center justify-center">
-        <div class="flex items-center step-item active" id="step1">
-          <div class="flex items-center justify-center w-7 h-7 rounded-full bg-gray-200 text-xs font-medium step-number transition-colors">1</div>
-          <span class="ml-1.5 text-xs font-medium step-text transition-colors">选择机型</span>
+        <div class="flex items-center justify-center">
+          <div class="flex items-center step-item active" id="step1" onclick="if(currentStep > 1) goToStep(1)">
+            <div class="flex items-center justify-center w-7 h-7 rounded-full text-xs font-medium step-number transition-colors">1</div>
+            <span class="ml-1.5 text-xs font-medium step-text transition-colors">选择机型</span>
+          </div>
+          <div class="w-12 h-px bg-gray-200 dark:bg-[#3E3E42] mx-2"></div>
+          <div class="flex items-center step-item" id="step2" onclick="if(wizardSelectedPrinter && currentStep > 2) goToStep(2)">
+            <div class="flex items-center justify-center w-7 h-7 rounded-full text-xs font-medium step-number transition-colors">2</div>
+            <span class="ml-1.5 text-xs font-medium step-text transition-colors">选择版本</span>
+          </div>
+          <div class="w-12 h-px bg-gray-200 dark:bg-[#3E3E42] mx-2"></div>
+          <div class="flex items-center step-item" id="step3">
+            <div class="flex items-center justify-center w-7 h-7 rounded-full text-xs font-medium step-number transition-colors">3</div>
+            <span class="ml-1.5 text-xs font-medium step-text transition-colors">基础参数</span>
+          </div>
         </div>
-        <div class="w-12 h-px bg-gray-200 dark:bg-[#3E3E42] mx-2"></div>
-        <div class="flex items-center step-item" id="step2">
-          <div class="flex items-center justify-center w-7 h-7 rounded-full bg-gray-200 text-gray-400 text-xs font-medium step-number transition-colors">2</div>
-          <span class="ml-1.5 text-xs text-gray-400 step-text transition-colors">选择版本</span>
-        </div>
-        <div class="w-12 h-px bg-gray-200 dark:bg-[#3E3E42] mx-2"></div>
-        <div class="flex items-center step-item" id="step3">
-          <div class="flex items-center justify-center w-7 h-7 rounded-full bg-gray-200 text-gray-400 text-xs font-medium step-number transition-colors">3</div>
-          <span class="ml-1.5 text-xs text-gray-400 step-text transition-colors">基础参数</span>
-        </div>
-      </div>
     </div>
 
 <div id="wizardSummaryBar" class="hidden items-center gap-2 px-6 py-2">
