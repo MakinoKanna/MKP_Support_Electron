@@ -1101,7 +1101,7 @@ function saveXYOffset() {
 // 终极数据同步与本地存储模块 (大一统引擎)
 // ============================================================
 
-// 1. 本地存储引擎：将用户的选择永久存入本地缓存
+// 1. 本地存储引擎
 function saveUserConfig() {
   const config = {
     brand: selectedBrand,
@@ -1125,7 +1125,7 @@ function loadUserConfig() {
   }
 }
 
-// 2. 辅助中心：快速根据机型ID找到它的完整数据
+// 2. 辅助中心
 function getPrinterObj(printerId) {
   for (const brandId in printersByBrand) {
     const p = printersByBrand[brandId].find(p => p.id === printerId);
@@ -1134,13 +1134,12 @@ function getPrinterObj(printerId) {
   return null;
 }
 
-// 3. 核心复用：通用版本卡片渲染器（同时给“引导页”和“下载页”打工！）
+// 3. 核心复用：上方版本卡片 (清爽外观 + 再次点击取消选择)
 function renderVersionCards(containerId, printerData, currentSelectedVersion, onSelectCallback) {
   const container = document.getElementById(containerId);
   if (!container || !printerData) return;
   container.innerHTML = '';
 
-  // 严格读取该机型支持的版本，默认兜底标准版
   let availableVersions = ['standard'];
   if (printerData.supportedVersions && printerData.supportedVersions.length > 0) {
     availableVersions = printerData.supportedVersions;
@@ -1158,11 +1157,18 @@ function renderVersionCards(containerId, printerData, currentSelectedVersion, on
 
     const isSelected = currentSelectedVersion === vType;
     const card = document.createElement('div');
-    // 自带完美的暗黑模式和选中高亮
+    
+    // 保持你圈出来的清爽原貌
     card.className = `version-card group bg-white dark:bg-[#252526] rounded-xl border p-4 cursor-pointer transition-all duration-200 hover:shadow-sm ${isSelected ? 'selected border-blue-500' : 'border-gray-200 dark:border-[#333333] hover:border-blue-300'}`;
     
-    // 绑定点击事件
-    card.onclick = () => onSelectCallback(vType);
+    // 【核心交互】：点击已选中的就传 null 取消掉，没选中的就正常传 vType
+    card.onclick = () => {
+      if (currentSelectedVersion === vType) {
+        onSelectCallback(null); 
+      } else {
+        onSelectCallback(vType);
+      }
+    };
 
     card.innerHTML = `
       <div class="flex items-center gap-4">
@@ -1186,54 +1192,223 @@ function renderVersionCards(containerId, printerData, currentSelectedVersion, on
   });
 }
 
-// 4. 重写：引导页版本渲染 (直接调用上面的引擎)
-function renderWizardVersions(printerData) {
-  renderVersionCards('wizardVersionList', printerData, wizardSelectedVersion, (vType) => {
-    wizardSelectedVersion = vType;
-    renderWizardVersions(printerData); // 刷新自己
-    updateWizardBadges(printerData.name, vType); 
-    updateWizardButtons(); // 激活下一步按钮
+// ============================================================
+// 云端动态数据拉取引擎 (OTA 更新核心)
+// ============================================================
+
+/* * 模拟云端的 manifest.json 文件内容。
+ * 未来你只需要把这段 JSON 放在 GitHub/Gitee 上，用 fetch() 去拉取它的 Raw 链接即可。
+ * 格式非常简单：大分类是机型 ID，中分类是版本类型，里面就是一个个的更新记录！
+ */
+const simulatedCloudManifest = {
+  "a1": {
+    "quick": [
+      { id: 'v2.0', date: '2024-10-24', isLatest: true, fileName: 'A1_quick_v2.0.toml', changes: ['优化了底面支撑剥离的手感', '修复了在大体积模型下的Z轴漂移误差'] },
+      { id: 'v1.5', date: '2024-09-12', isLatest: false, fileName: 'A1_quick_v1.5.toml', changes: ['出厂默认参数', '稳定且兼容性极高的基础预设'] }
+    ],
+    "standard": [
+      { id: 'v1.0', date: '2024-08-01', isLatest: true, fileName: 'A1_standard_v1.0.toml', changes: ['初代标准版发布'] }
+    ]
+  },
+  "a1mini": {
+    "quick": [
+      { id: 'v3.0', date: '2024-11-01', isLatest: true, fileName: 'A1mini_quick_v3.0.toml', changes: ['专门针对 Mini 优化的快拆参数'] }
+    ]
+  }
+};
+
+// 【模拟网络请求】：去 GitHub 拉取数据
+async function fetchCloudPresets(printerId, versionType) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      // 真实环境下这里是： const response = await fetch('https://raw.githubusercontent.com/你的仓库/presets_manifest.json');
+      // return response.json();
+      
+      const printerData = simulatedCloudManifest[printerId];
+      if (printerData && printerData[versionType]) {
+        resolve(printerData[versionType]);
+      } else {
+        resolve([]); // 如果云端没有这个机型的这个版本，返回空数组
+      }
+    }, 600); // 模拟 0.6 秒的网络延迟，让你看到酷炫的加载动画
   });
 }
 
-// 5. 新增：下载页版本渲染 (直接调用上面的引擎，逻辑完全一致)
+// ------------------------------------------------------------
+// 异步渲染列表引擎 (自带 Loading 骨架屏)
+// ------------------------------------------------------------
+async function renderPresetList(printerData, versionType) {
+  const container = document.getElementById('presetReleasesContainer');
+  const emptyState = document.getElementById('presetEmptyState');
+  const listEl = document.getElementById('presetReleasesList');
+  const step2Badge = document.getElementById('step2Badge');
+  
+  if (!container || !listEl) return;
+
+  if (!versionType || !printerData) {
+    emptyState.classList.remove('hidden');
+    listEl.classList.add('hidden');
+    listEl.classList.remove('flex');
+    if (step2Badge) step2Badge.classList.remove('text-blue-500');
+    return;
+  }
+
+  // 1. 点亮左侧图标，隐藏空状态，显示列表容器
+  if (step2Badge) step2Badge.classList.add('text-blue-500');
+  emptyState.classList.add('hidden');
+  listEl.classList.remove('hidden');
+  listEl.classList.add('flex');
+  
+  // 2. 注入 Loading 动画！(网络请求时让用户等待)
+  listEl.innerHTML = `
+    <div class="p-8 flex flex-col items-center justify-center text-center space-y-3">
+      <svg class="w-8 h-8 text-blue-500 animate-spin" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      <div class="text-sm text-gray-500">正在从云端拉取最新预设数据...</div>
+    </div>
+  `;
+
+  // 3. 执行网络请求拉取数据
+  const releases = await fetchCloudPresets(printerData.id, versionType);
+
+  // 4. 清空 Loading，渲染真实数据
+  listEl.innerHTML = '';
+  
+  if (releases.length === 0) {
+    listEl.innerHTML = `<div class="p-8 text-center text-sm text-gray-500">云端暂未发布该版本的预设文件。</div>`;
+    return;
+  }
+
+  const versionNames = { standard: '标准版', quick: '快拆版', lite: 'Lite版' };
+  const presetNamePrefix = `${printerData.shortName} ${versionNames[versionType] || ''}`;
+
+  releases.forEach((release) => {
+    const item = document.createElement('div');
+    // 默认折叠
+    const isExpanded = false; 
+    
+    // 【判断本地是否已安装】
+    // 这里未来可以通过 Electron 的 fs.existsSync() 去检查本地 User 文件夹里有没有这个 release.fileName
+    const isInstalledLocally = false; // 暂时模拟全都没安装
+
+    item.className = `collapse-item border-b border-gray-100 dark:border-[#333] last:border-b-0`;
+    
+    item.innerHTML = `
+      <div class="preset-header px-5 py-3.5 flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-[#2A2D2E] transition-colors">
+        <div class="flex items-center gap-3">
+          <span class="text-sm font-bold text-gray-900 dark:text-gray-100">${presetNamePrefix} ${release.id}</span>
+          ${release.isLatest ? '<span class="px-2 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400">最新</span>' : ''}
+          ${isInstalledLocally ? '<span class="px-2 py-0.5 rounded text-[10px] font-medium bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400 flex items-center gap-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>已安装</span>' : ''}
+          <span class="text-xs text-gray-400 ml-2 hidden sm:inline">发布于 ${release.date}</span>
+        </div>
+        
+        <div class="flex items-center gap-4">
+          <button class="dl-btn px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${isInstalledLocally ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-[#333] dark:text-gray-200 dark:hover:bg-[#444]' : 'bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:bg-blue-500/20'}">
+            ${isInstalledLocally ? '应用此版本' : '下载并应用'}
+          </button>
+          <svg class="w-5 h-5 text-gray-400 collapse-arrow transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+      </div>
+      
+      <div class="collapse-wrapper">
+        <div class="collapse-inner">
+          <div class="px-5 pb-4 pt-1">
+            <div class="bg-gray-50 dark:bg-[#1E1E1E] rounded-xl p-4 border border-gray-100 dark:border-[#333]">
+              <div class="flex justify-between items-center mb-2">
+                 <div class="text-xs font-medium text-gray-700 dark:text-gray-300">更新日志：</div>
+                 <div class="text-[10px] text-gray-400 font-mono bg-gray-200 dark:bg-[#333] px-2 py-0.5 rounded">云端文件: ${release.fileName}</div>
+              </div>
+              <ul class="space-y-1.5 text-xs text-gray-600 dark:text-gray-400">
+                ${release.changes.map(c => `<li class="flex items-start gap-1.5"><span class="text-gray-300 dark:text-gray-600 mt-0.5">•</span> ${c}</li>`).join('')}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const header = item.querySelector('.preset-header');
+    header.addEventListener('click', () => {
+      const wrapper = item.querySelector('.collapse-wrapper');
+      wrapper.classList.toggle('is-expanded');
+      item.classList.toggle('expanded'); 
+    });
+
+    const dlBtn = item.querySelector('.dl-btn');
+    dlBtn.addEventListener('click', (e) => {
+      e.stopPropagation(); 
+      // 把云端文件名传给下载函数
+      applyPreset(release.id, isInstalledLocally.toString(), release.fileName);
+    });
+
+    listEl.appendChild(item);
+  });
+}
+
+// 模拟点击下载按钮动作 (带上文件名)
+function applyPreset(releaseId, isInstalled, fileName) {
+  console.log(`[云端下载指令] 准备从 GitHub/Gitee 下载: ${fileName}`);
+  const dlBtn = document.getElementById('downloadBtn');
+  const dlHint = document.getElementById('downloadHintWrapper');
+  if(dlBtn) {
+    dlBtn.disabled = false;
+    dlBtn.innerHTML = `<span>下一步</span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>`;
+  }
+  if(dlHint) dlHint.style.opacity = '0';
+  alert(`已触发下载逻辑！\n\n系统将自动去网络请求：\nhttps://your-github.com/.../${fileName}\n\n下载完成后将应用此版本。`);
+}
+
+// 5. 升级版：打通页面的核心逻辑
 function renderDownloadVersions(printerData) {
   renderVersionCards('downloadVersionList', printerData, selectedVersion, (vType) => {
-    selectedVersion = vType;
-    saveUserConfig(); // 选完立刻存档！
+    selectedVersion = vType; // null=反选, standard=选中
+    saveUserConfig();
     
     renderDownloadVersions(printerData); // 刷新自己
-    updateSidebarVersionBadge(vType); // 侧边栏联动
+    updateSidebarVersionBadge(vType); 
     
-    // 解锁下载按钮和日期选择器
-    const dateSelect = document.getElementById('dateSelect');
-    if(dateSelect) {
-        dateSelect.disabled = false;
-        dateSelect.classList.remove('cursor-not-allowed', 'text-gray-400');
-        dateSelect.classList.add('text-gray-900', 'dark:text-gray-100');
-    }
-    const dlBtn = document.getElementById('downloadBtn');
-    const dlHint = document.getElementById('downloadHintWrapper');
-    if(dlBtn) dlBtn.disabled = false;
-    if(dlHint) dlHint.style.opacity = '0';
+    // 核心联动：下方的折叠列表
+    renderPresetList(printerData, vType);
   });
 
-  // 防呆逻辑：如果因为换了机型导致没选中版本，立刻上锁
+  // 控制右上角的下一步按钮
   if (!selectedVersion) {
-    const dateSelect = document.getElementById('dateSelect');
-    if(dateSelect) {
-        dateSelect.disabled = true;
-        dateSelect.classList.add('cursor-not-allowed', 'text-gray-400');
-        dateSelect.classList.remove('text-gray-900', 'dark:text-gray-100');
-    }
+    renderPresetList(printerData, null);
     const dlBtn = document.getElementById('downloadBtn');
     const dlHint = document.getElementById('downloadHintWrapper');
     if(dlBtn) dlBtn.disabled = true;
     if(dlHint) dlHint.style.opacity = '1';
+  } else {
+    renderPresetList(printerData, selectedVersion);
   }
 }
 
-// 6. 重写：主界面选择机型 (换机型 = 自动清空旧版本并存档)
+// 6. 重写：引导页逻辑复用
+function renderWizardVersions(printerData) {
+  renderVersionCards('wizardVersionList', printerData, wizardSelectedVersion, (vType) => {
+    wizardSelectedVersion = vType;
+    renderWizardVersions(printerData); 
+    updateWizardBadges(printerData.name, vType); 
+    updateWizardButtons(); 
+  });
+}
+
+// 7. 模拟点击下载/应用按钮的动作
+function applyPreset(releaseId, isInstalled) {
+  console.log(`指令：准备应用 ${releaseId} 版本的 .toml 文件`);
+  const dlBtn = document.getElementById('downloadBtn');
+  const dlHint = document.getElementById('downloadHintWrapper');
+  if(dlBtn) {
+    dlBtn.disabled = false;
+    dlBtn.innerHTML = `<span>下一步</span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>`;
+  }
+  if(dlHint) dlHint.style.opacity = '0';
+  alert(isInstalled === 'true' ? `已成功应用本地配置: ${releaseId}` : `配置 ${releaseId} 下载成功并已应用！`);
+}
+
+// 8. 重写：主界面选择机型 (换机型 = 自动清空旧版本并存档)
 function selectPrinter(printerId, keepVersion = false) {
   selectedPrinter = printerId;
   let selectedPrinterObj = getPrinterObj(printerId);
@@ -1241,34 +1416,29 @@ function selectPrinter(printerId, keepVersion = false) {
   if (selectedPrinterObj) {
     selectedBrand = brands.find(b => printersByBrand[b.id].some(p => p.id === printerId)).id;
     
-    // 【核心要求】：切换机型时，强制清空版本变为"未选择"（除非是刚从引导页带数据过来）
     if (!keepVersion) {
         selectedVersion = null; 
     }
 
-    // 更新侧边栏文字
     document.getElementById('sidebarBrand').textContent = brands.find(b => b.id === selectedBrand).shortName;
     document.getElementById('sidebarModelName').textContent = selectedPrinterObj.shortName;
     updateSidebarVersionBadge(selectedVersion);
     
-    saveUserConfig(); // 存档
+    saveUserConfig(); 
     
-    // 让界面重新画一遍
     renderBrands();
     renderPrinters(selectedBrand);
     renderDownloadVersions(selectedPrinterObj);
   }
 }
 
-// 7. 重写：引导页完成按钮 (把引导页的选择同步给主界面并存档)
+// 9. 重写：引导页完成按钮
 function completeOnboarding() {
   selectedBrand = wizardSelectedBrand;
   selectedPrinter = wizardSelectedPrinter;
   selectedVersion = wizardSelectedVersion;
+  saveUserConfig(); 
   
-  saveUserConfig(); // 存档
-  
-  // 触发主界面更新 (传入 true 代表不要洗掉刚才选的版本)
   selectPrinter(selectedPrinter, true); 
   
   const onboarding = document.getElementById('onboarding');
@@ -1281,42 +1451,12 @@ function completeOnboarding() {
   }
 }
 
-// 8. 重写：侧边栏徽章更新 (支持显示灰色的"未选择")
-function updateSidebarVersionBadge(version) {
-  const badge = document.getElementById('sidebarVersionBadge');
-  if (!badge) return;
-  
-  badge.style.backgroundColor = '';
-  badge.style.color = '';
-  
-  if (!version) {
-    badge.textContent = '未选择';
-    badge.className = 'px-2 py-0.5 rounded-full text-[11px] font-medium bg-gray-100 text-gray-400 dark:bg-[#333] dark:text-gray-500 whitespace-nowrap transition-colors duration-300';
-    return;
-  }
-  
-  badge.className = 'px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap transition-colors duration-300';
-  if (version === 'standard') {
-    badge.textContent = '标准版';
-    badge.style.backgroundColor = 'var(--theme-standard-bg)';
-    badge.style.color = 'var(--theme-standard-text)';
-  } else if (version === 'quick') {
-    badge.textContent = '快拆版';
-    badge.style.backgroundColor = 'var(--theme-quick-bg)';
-    badge.style.color = 'var(--theme-quick-text)';
-  } else if (version === 'lite') {
-    badge.textContent = 'Lite版';
-    badge.style.backgroundColor = 'var(--theme-lite-bg)';
-    badge.style.color = 'var(--theme-lite-text)';
-  }
-}
-
-// 9. 重写：软件加载时的初始化 (开局读档！)
+// 10. 重写：软件加载时的初始化
 function init() {
-  loadUserConfig(); // 第一步：读取本地配置文件
+  loadUserConfig(); 
   
   renderBrands();
-  selectPrinter(selectedPrinter, true); // 使用读取到的数据画出界面
+  selectPrinter(selectedPrinter, true); 
   
   renderVersions();
   bindNavigation();

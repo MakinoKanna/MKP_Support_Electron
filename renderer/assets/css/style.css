@@ -504,3 +504,32 @@ html.dark .step-item.completed .step-number {
 html.dark .step-item.completed .step-text {
   color: var(--accent-green, #10B981) !important; /* 强制文字变绿色！ */
 }
+
+/* ============================================================
+   全局手风琴折叠动画引擎 (预设列表、常见问题 FAQ 共用)
+   ============================================================ */
+
+/* 1. 核心折叠逻辑：默认高度为 0，超出部分隐藏 */
+.collapse-wrapper {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.25s ease-out;
+}
+
+/* 2. 展开状态：高度自动适配内容 */
+.collapse-wrapper.is-expanded {
+  grid-template-rows: 1fr;
+}
+
+/* 3. 内部容器：防止折叠时内容溢出 */
+.collapse-inner {
+  overflow: hidden;
+}
+
+/* 4. 小箭头旋转动画：平滑翻转 180 度指向上方 */
+.collapse-arrow {
+  transition: transform 0.25s ease;
+}
+.collapse-item.expanded .collapse-arrow {
+  transform: rotate(180deg);
+}
