@@ -1,5 +1,4 @@
 const fs = require('fs');
-const toml = require('toml');
 
 function formatXYZE(line) {
   return line.replace(/([XYEZ])([\d.]+)/g, (match, axis, val) => {
@@ -30,12 +29,12 @@ function processOffset(line, xOffset, yOffset, zOffset) {
   return processed;
 }
 
-function processGcode(gcodePath, tomlPath) {
+function processGcode(gcodePath, jsonPath) {
   try {
-    const tomlContent = fs.readFileSync(tomlPath, 'utf8');
-    const config = toml.parse(tomlContent);
+    const jsonContent = fs.readFileSync(jsonPath, 'utf8');
+    const config = JSON.parse(jsonContent);
     
-    // 严格按照你原始 TOML 的层级读取
+    // 按照JSON的层级读取
     const toolhead = config.toolhead || {};
     const xOffset = toolhead.offset?.x || 0;
     const yOffset = toolhead.offset?.y || 0;
@@ -71,7 +70,7 @@ function processGcode(gcodePath, tomlPath) {
           result.push('; ===== MKP Support Glueing Start =====');
           result.push('M106 S255 ; 开启风扇吹干');
           result.push(`G1 Z${(currentZ + zOffset + 3).toFixed(3)} ; 抬起防撞`);
-          result.push(mountGcode.trim()); // 执行你 TOML 里的装笔动作
+          result.push(mountGcode.trim()); // 执行JSON里的装笔动作
           result.push(`G1 F${Math.floor(speedLimit * 60)}`);
           
           for (const iLine of interfaceBuffer) {

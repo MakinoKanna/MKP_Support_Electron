@@ -14,12 +14,12 @@ if (isCliMode) {
   app.whenReady().then(() => {
     try {
       const gcodePath = process.argv[process.argv.indexOf('--Gcode') + 1];
-      const tomlPath = process.argv[process.argv.indexOf('--Toml') + 1];
+      const jsonPath = process.argv[process.argv.indexOf('--Json') + 1];
       
-      if (!gcodePath || !tomlPath) throw new Error('参数缺失');
+      if (!gcodePath || !jsonPath) throw new Error('参数缺失');
 
       const startTime = Date.now();
-      const processedGcode = processGcode(gcodePath, tomlPath);
+      const processedGcode = processGcode(gcodePath, jsonPath);
       
       const outputPath = gcodePath.replace('.gcode', '_processed.gcode');
       fs.writeFileSync(outputPath, processedGcode);
@@ -88,3 +88,47 @@ if (isCliMode) {
     if (process.platform !== 'darwin') app.quit();
   });
 }
+
+// 1. 读取 JSON 预设
+  ipcMain.handle('read-preset', async (event, filePath) => {
+    try {
+      if (!fs.existsSync(filePath)) return { success: false, error: '文件不存在' };
+      const content = fs.readFileSync(filePath, 'utf-8');
+      return { success: true, data: JSON.parse(content) }; // 原生秒解
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  // 2. 写入 JSON 预设 (极其简单，绝对不会丢数据)
+  ipcMain.handle('write-preset', async (event, filePath, updates) => {
+    try {
+      if (!fs.existsSync(filePath)) return { success: false, error: '文件不存在' };
+      
+      // 先读出现有数据
+      const content = fs.readFileSync(filePath, 'utf-8');
+      let data = JSON.parse(content);
+
+      // 深度合并更新的数据 (例如把新的 x 偏移塞进去)
+      // 假设前端传来的 updates 是 { toolhead: { offset: { x: 0.5 } } }
+      data = mergeDeep(data, updates); // (这里可以用一个简单的合并函数)
+
+      // 原生完美写回，带有 2 个空格的美化缩进
+      fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  // 简单的深度合并函数
+  function mergeDeep(target, source) {
+    for (const key in source) {
+      if (source[key] instanceof Object && key in target) {
+        mergeDeep(target[key], source[key]);
+      } else {
+        target[key] = source[key];
+      }
+    }
+    return target;
+  }

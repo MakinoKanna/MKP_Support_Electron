@@ -95,7 +95,13 @@ html.dark #sidebar button.active { color: #60A5FA; }
   margin: 0 !important; padding: 0 !important; font-size: 0 !important; overflow: hidden !important;
 }
 #sidebar button svg { transform: translateX(1.5px); }
-
+#sidebar {
+  /* 告诉浏览器：这个元素的宽度未来会变，请提前分配显卡层，不要临时抱佛脚 */
+  will-change: width;
+  
+  /* 强制开启 GPU 硬件加速的古老魔法 */
+  transform: translateZ(0); 
+}
 /* ==================== 4. 其它 UI 组件 ==================== */
 /* 智能机型名称前缀折叠动画 */
 .brand-prefix {
@@ -533,3 +539,4 @@ html.dark .step-item.completed .step-text {
 .collapse-item.expanded .collapse-arrow {
   transform: rotate(180deg);
 }
+

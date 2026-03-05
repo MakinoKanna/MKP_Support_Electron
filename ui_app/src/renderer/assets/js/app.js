@@ -1466,11 +1466,11 @@ function init() {
   initTheme();
   initSystemThemeListener();
   initOnboardingSetting();
-  
   if (!checkShowOnboarding()) {
     skipOnboarding();
   }
 }
+
 
 // ==================== 12. 事件监听 ====================
 /*

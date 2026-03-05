@@ -9,9 +9,6 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "dependencies": {
-    "toml": "^3.0.0"
-  },
   "devDependencies": {
     "electron": "^29.0.0"
   }
