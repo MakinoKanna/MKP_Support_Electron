@@ -48,16 +48,9 @@ function executeThemeTransition(mode, isDark, event) {
     }
 
     // 通知 Electron 主进程同步修改原生窗口标题栏
-    // 检查 require 是否存在，防止在普通浏览器里调试时报错
-    if (typeof require !== 'undefined') {
-      try {
-        const { ipcRenderer } = require('electron');
-        // 发送消息给 main.js，告知当前的主题模式 ('light', 'dark', 'system')
-        ipcRenderer.send('set-native-theme', mode);
-      } catch (error) {
-        // 忽略错误，在非 Electron 环境中不会影响功能
-      }
-    }
+    if (window.mkpAPI && window.mkpAPI.setNativeTheme) {
+          window.mkpAPI.setNativeTheme(mode);
+        }
   };
 
   // 如果浏览器/Electron版本过低不支持该 API，直接切换无动画

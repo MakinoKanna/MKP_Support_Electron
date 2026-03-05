@@ -1,0 +1,18 @@
+{
+  "name": "ui_app",
+  "version": "1.0.0",
+  "description": "MKP Support Electron Application",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "toml": "^3.0.0"
+  },
+  "devDependencies": {
+    "electron": "^29.0.0"
+  }
+}
