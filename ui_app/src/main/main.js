@@ -1,8 +1,10 @@
-const { app, BrowserWindow, Notification, ipcMain, nativeTheme } = require('electron'); // 必须全部引入
+const { app, BrowserWindow, Notification, ipcMain, nativeTheme, shell } = require('electron'); // 必须全部引入
 const path = require('path');
 const fs = require('fs');
 const { processGcode } = require('./mkp_engine');
+const { exec } = require('child_process');
 const isCliMode = process.argv.includes('--Gcode');
+
 // ==========================================
 // 日志系统 (写入本地文件)
 // ==========================================
@@ -29,6 +31,7 @@ ipcMain.on('write-log', (event, message) => {
     console.error("写入日志文件失败:", error);
   }
 });
+
 // 版本号对比工具
 function compareVersions(v1, v2) {
   const a = (v1 || '0.0.0').replace(/^v/, '').split('.').map(Number);
@@ -124,6 +127,13 @@ if (isCliMode) {
   // 🌞 显性人格：正常 GUI 界面
   // ==========================================
   
+  // ==========================================
+  // 获取当前运行的 EXE 绝对路径 (用于拼接脚本)
+  // ==========================================
+  ipcMain.handle('get-exe-path', () => {
+    return app.getPath('exe'); 
+  });
+
   // 监听前端的系统数据请求
   ipcMain.handle('get-userdata-path', () => {
     return path.join(app.getPath('userData'), 'Presets'); 
@@ -131,9 +141,9 @@ if (isCliMode) {
 
   function createWindow() {
     const mainWindow = new BrowserWindow({
-      width: 920,
+      width: 940,
       height: 630,      // 加上 30px 补偿
-      minWidth: 920,
+      minWidth: 940,
       minHeight: 630,   // 加上 30px 补偿
       useContentSize: false, // 彻底关掉内容计算，解决 580px 挤压 bug
       autoHideMenuBar: true, // 隐藏菜单栏
@@ -165,46 +175,171 @@ if (isCliMode) {
   });
 }
 
+// ==========================================
+// 数据读写与文件操作引擎
+// ==========================================
+
 // 1. 读取 JSON 预设
-  ipcMain.handle('read-preset', async (event, filePath) => {
-    try {
-      if (!fs.existsSync(filePath)) return { success: false, error: '文件不存在' };
-      const content = fs.readFileSync(filePath, 'utf-8');
-      return { success: true, data: JSON.parse(content) }; // 原生秒解
-    } catch (error) {
-      return { success: false, error: error.message };
+ipcMain.handle('read-preset', async (event, filePath) => {
+  try {
+    if (!fs.existsSync(filePath)) return { success: false, error: '文件不存在' };
+    const content = fs.readFileSync(filePath, 'utf-8');
+    return { success: true, data: JSON.parse(content) }; // 原生秒解
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+// 2. 写入 JSON 预设 (极其简单，绝对不会丢数据)
+ipcMain.handle('write-preset', async (event, filePath, updates) => {
+  try {
+    if (!fs.existsSync(filePath)) return { success: false, error: '文件不存在' };
+    
+    // 先读出现有数据
+    const content = fs.readFileSync(filePath, 'utf-8');
+    let data = JSON.parse(content);
+
+    // 深度合并更新的数据 (例如把新的 x 偏移塞进去)
+    // 假设前端传来的 updates 是 { toolhead: { offset: { x: 0.5 } } }
+    data = mergeDeep(data, updates); // (这里可以用一个简单的合并函数)
+
+    // 原生完美写回，带有 2 个空格的美化缩进
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+// 简单的深度合并函数
+function mergeDeep(target, source) {
+  for (const key in source) {
+    if (source[key] instanceof Object && key in target) {
+      mergeDeep(target[key], source[key]);
+    } else {
+      target[key] = source[key];
     }
-  });
+  }
+  return target;
+}
 
-  // 2. 写入 JSON 预设 (极其简单，绝对不会丢数据)
-  ipcMain.handle('write-preset', async (event, filePath, updates) => {
-    try {
-      if (!fs.existsSync(filePath)) return { success: false, error: '文件不存在' };
-      
-      // 先读出现有数据
-      const content = fs.readFileSync(filePath, 'utf-8');
-      let data = JSON.parse(content);
+// ==========================================
+// 真实文件探测器
+// ==========================================
+ipcMain.handle('check-file-exists', (event, fileName) => {
+  try {
+    const filePath = path.join(app.getPath('userData'), 'Presets', fileName);
+    return fs.existsSync(filePath);
+  } catch (error) {
+    return false;
+  }
+});
 
-      // 深度合并更新的数据 (例如把新的 x 偏移塞进去)
-      // 假设前端传来的 updates 是 { toolhead: { offset: { x: 0.5 } } }
-      data = mergeDeep(data, updates); // (这里可以用一个简单的合并函数)
+// ==========================================
+// 真实下载引擎：从网络拉取文件并保存到本地
+// ==========================================
+ipcMain.handle('download-file', async (event, fileUrl, fileName) => {
+  try {
+    const userDataPath = path.join(app.getPath('userData'), 'Presets');
+    if (!fs.existsSync(userDataPath)) {
+      fs.mkdirSync(userDataPath, { recursive: true });
+    }
+    
+    // 目标保存路径
+    const targetPath = path.join(userDataPath, fileName);
 
-      // 原生完美写回，带有 2 个空格的美化缩进
-      fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
+    // 发起网络请求 (Electron 现在的 Node 版本自带原生 fetch)
+    const response = await fetch(fileUrl);
+    if (!response.ok) {
+      throw new Error(`HTTP 错误: ${response.status}`);
+    }
+    
+    // 获取文本内容并写入文件
+    const textContent = await response.text();
+    fs.writeFileSync(targetPath, textContent, 'utf-8');
+
+    return { success: true };
+  } catch (error) {
+    console.error("下载文件失败:", error);
+    return { success: false, error: error.message };
+  }
+});
+
+// ==========================================
+// 真实文件删除引擎
+// ==========================================
+ipcMain.handle('delete-file', (event, fileName) => {
+  try {
+    const filePath = path.join(app.getPath('userData'), 'Presets', fileName);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
       return { success: true };
-    } catch (error) {
-      return { success: false, error: error.message };
     }
-  });
+    return { success: false, error: '文件不存在' };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
 
-  // 简单的深度合并函数
-  function mergeDeep(target, source) {
-    for (const key in source) {
-      if (source[key] instanceof Object && key in target) {
-        mergeDeep(target[key], source[key]);
+// ==========================================
+// 智能模型提取与保护引擎 (防篡改、防占用、支持首次强制选择打开方式)
+// ==========================================
+ipcMain.handle('open-calibration-model', async (event, modelType, forceOpenWith = false) => {
+  try {
+    const sourceDir = path.join(__dirname, '../default_models');
+    // 【修改点 1】：应用你指定的新模型名称
+    const baseFileName = modelType === 'Z' ? 'ZOffset Calibration.3mf' : 'Precise Calibration.3mf';
+    const sourcePath = path.join(sourceDir, baseFileName);
+
+    if (!fs.existsSync(sourcePath)) {
+      return { success: false, error: `找不到底层模型文件：${baseFileName}` };
+    }
+
+    const targetDir = path.join(app.getPath('userData'), 'CalibrationModels');
+    if (!fs.existsSync(targetDir)) {
+      fs.mkdirSync(targetDir, { recursive: true });
+    }
+
+    let targetPath = path.join(targetDir, baseFileName);
+    let finalFileName = baseFileName;
+
+    // 智能防占用复制
+    try {
+      fs.copyFileSync(sourcePath, targetPath);
+    } catch (err) {
+      if (err.code === 'EBUSY' || err.code === 'EPERM') {
+        const ext = path.extname(baseFileName);
+        const name = path.basename(baseFileName, ext);
+        finalFileName = `${name}_${Date.now()}${ext}`; 
+        targetPath = path.join(targetDir, finalFileName);
+        fs.copyFileSync(sourcePath, targetPath);
       } else {
-        target[key] = source[key];
+        throw err;
       }
     }
-    return target;
+
+    // 静默清理历史垃圾
+    fs.readdir(targetDir, (err, files) => {
+      if (!err) {
+        files.forEach(file => {
+          if (file !== finalFileName && (file.startsWith('ZOffset Calibration') || file.startsWith('Precise Calibration'))) {
+            try { fs.unlinkSync(path.join(targetDir, file)); } catch (e) { }
+          }
+        });
+      }
+    });
+
+    // 【修改点 2】：Windows 专属的“打开方式”强制弹窗！
+    if (forceOpenWith && process.platform === 'win32') {
+      // 呼叫 Windows 底层 API 强制弹出软件选择框
+      exec(`rundll32 shell32.dll,OpenAs_RunDLL "${targetPath}"`);
+      return { success: true, path: targetPath };
+    } else {
+      const openError = await shell.openPath(targetPath);
+      if (openError) return { success: false, error: `无法打开模型: ${openError}` };
+      return { success: true, path: targetPath };
+    }
+  } catch (error) {
+    return { success: false, error: error.message };
   }
+});

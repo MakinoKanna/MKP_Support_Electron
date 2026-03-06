@@ -1,21 +1,18 @@
-// ui_app/preload.js
-// 这是 MKP Support 专属的渲染进程与主进程通信大桥
-
 const { contextBridge, ipcRenderer } = require('electron');
 
-// 暴露名为 'mkpAPI' 的专属对象给前端的 window
 contextBridge.exposeInMainWorld('mkpAPI', {
-  
-  // 1. 主题切换专属通道
-  setNativeTheme: (mode) => ipcRenderer.send('set-native-theme', mode),
-
-  // 2. TOML 文件读写专属通道
-  readToml: (filePath) => ipcRenderer.invoke('read-toml', filePath),
-  writeToml: (filePath, newData) => ipcRenderer.invoke('write-toml', filePath, newData),
-  
-  // 3. 获取用户本地数据存放路径
-  getUserDataPath: () => ipcRenderer.invoke('get-userdata-path'),
-  
+  writeLog: (msg) => ipcRenderer.send('write-log', msg),
   initDefaultPresets: () => ipcRenderer.invoke('init-default-presets'),
-  writeLog: (message) => ipcRenderer.send('write-log', message)
+  checkFileExists: (fileName) => ipcRenderer.invoke('check-file-exists', fileName),
+  downloadFile: (fileUrl, fileName) => ipcRenderer.invoke('download-file', fileUrl, fileName),
+  deleteFile: (fileName) => ipcRenderer.invoke('delete-file', fileName),
+
+  // 【新增】：核心路径与参数读写
+  getExePath: () => ipcRenderer.invoke('get-exe-path'), // 获取 EXE 程序路径
+  getUserDataPath: () => ipcRenderer.invoke('get-userdata-path'), // 获取配置存放路径
+  readPreset: (filePath) => ipcRenderer.invoke('read-preset', filePath),
+  writePreset: (filePath, updates) => ipcRenderer.invoke('write-preset', filePath, updates),
+
+  // 【新增】：智能打开校准模型
+  openCalibrationModel: (type, forceOpenWith) => ipcRenderer.invoke('open-calibration-model', type, forceOpenWith)
 });

@@ -306,27 +306,52 @@
             </div>
 
             <div>
+
+<div class="mb-8">
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-3">
+                  <svg id="step2Badge" class="w-6 h-6 text-gray-400 flex-shrink-0 transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                  </svg>
+                  <div>
+                    <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100">本地预设</h2>
+                    <p class="text-xs text-gray-500">已存放在您电脑中的配置，点击即可应用</p>
+                  </div>
+                </div>
+                <button id="checkUpdateBtn" onclick="checkOnlineUpdates()" class="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 flex items-center gap-1.5 transition-colors bg-blue-50 dark:bg-blue-500/10 px-4 py-2 rounded-lg disabled:opacity-70 disabled:cursor-not-allowed">
+                  <svg id="refreshIcon" class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                  </svg>
+                  <span id="checkUpdateText">检查更新</span>
+                </button>
+              </div>
+
+              <div id="localPresetsContainer" class="bg-white dark:bg-[#252526] rounded-2xl border border-gray-200 dark:border-[#333] shadow-sm overflow-hidden transition-all duration-300">
+                <div id="localEmptyState" class="p-8 flex flex-col items-center justify-center text-center">
+                  <p class="text-sm text-gray-500 dark:text-gray-400">请先在上方选择「版本类型」</p>
+                </div>
+                <div id="localPresetsList" class="hidden flex-col divide-y divide-gray-100 dark:divide-[#333]"></div>
+              </div>
+            </div>
+
+            <div>
               <div class="flex items-center gap-3 mb-4">
-                <svg id="step2Badge" class="w-6 h-6 text-gray-400 flex-shrink-0 transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                <svg class="w-6 h-6 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
                 </svg>
                 <div>
-                  <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100">选择预设版本</h2>
-                  <p class="text-xs text-gray-500">获取对应的 .toml 配置文件，支持一键下载并应用</p>
+                  <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100">在线预设</h2>
+                  <p class="text-xs text-gray-500">云端最新的配置文件，下载后将出现在本地预设中</p>
                 </div>
               </div>
 
-              <div id="presetReleasesContainer" class="bg-white dark:bg-[#252526] rounded-2xl border border-gray-200 dark:border-[#333] shadow-sm overflow-hidden transition-all duration-300">
-                <div id="presetEmptyState" class="p-8 flex flex-col items-center justify-center text-center">
-                  <div class="w-12 h-12 bg-gray-50 dark:bg-[#1E1E1E] rounded-full flex items-center justify-center mb-3">
-                    <svg class="w-6 h-6 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
-                  </div>
-                  <p class="text-sm text-gray-500 dark:text-gray-400">请先在上方选择「版本类型」</p>
+              <div id="onlinePresetsContainer" class="bg-white dark:bg-[#252526] rounded-2xl border border-gray-200 dark:border-[#333] shadow-sm overflow-hidden transition-all duration-300">
+                <div id="onlineEmptyState" class="p-8 flex flex-col items-center justify-center text-center">
+                  <p class="text-sm text-gray-500 dark:text-gray-400">点击上方的“检查更新”获取云端预设</p>
                 </div>
-                
-                <div id="presetReleasesList" class="hidden flex-col divide-y divide-gray-100 dark:divide-[#333]">
-                </div>
+                <div id="onlinePresetsList" class="hidden flex-col divide-y divide-gray-100 dark:divide-[#333]"></div>
               </div>
+            </div>
             </div>
 
 
@@ -456,59 +481,25 @@
       <!-- 修改参数页面 -->
       <div id="page-params" class="page flex-1 overflow-y-auto p-8 hidden">
         <div class="flex items-center justify-between h-12 mb-6 shrink-0 w-full">
-          <h1 class="text-2xl font-bold text-gray-900 tracking-tight">修改参数</h1>
-          <button class="btn-secondary px-4 py-2 rounded-xl text-sm flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z"/></svg>
-            直接编辑 .toml 文本
+          <div>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">修改参数</h1>
+            <p class="text-xs text-gray-500 mt-1">当前编辑文件：<span id="currentEditingFile" class="font-mono text-blue-500">未选择</span></p>
+          </div>
+          <button id="saveParamsBtn" onclick="saveAllDynamicParams()" class="btn-primary px-6 py-2.5 rounded-xl text-sm font-medium hover:bg-blue-600 transition-colors flex items-center gap-2">
+            保存所有修改
           </button>
         </div>
-        <div class="max-w-4xl">
-          <div class="bg-white rounded-xl card-shadow p-5 mb-5">
-            <div class="text-sm font-medium text-gray-700 mb-4">运动控制</div>
-            <div class="grid grid-cols-2 gap-x-8 gap-y-4">
-              <div>
-                <div class="flex items-center gap-2 mb-2">
-                  <label class="text-sm text-gray-600">X轴最大速度</label>
-                </div>
-                <div class="relative">
-                  <input type="number" value="500" class="input-field w-full px-4 py-2.5 rounded-lg text-sm text-right pr-14">
-                  <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">mm/s</span>
-                </div>
-              </div>
-              <div>
-                <div class="flex items-center gap-2 mb-2">
-                  <label class="text-sm text-gray-600">Y轴最大速度</label>
-                </div>
-                <div class="relative">
-                  <input type="number" value="500" class="input-field w-full px-4 py-2.5 rounded-lg text-sm text-right pr-14">
-                  <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">mm/s</span>
-                </div>
-              </div>
+        
+        <div class="max-w-6xl">
+          <div class="bg-white dark:bg-[#252526] rounded-xl card-shadow p-6 mb-5 border border-gray-100 dark:border-[#333]">
+            <div class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-6 flex items-center gap-2">
+              <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"/></svg>
+              JSON 预设全参数映射
             </div>
-          </div>
+            
+            <div id="dynamicParamsContainer" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-4">
+              </div>
 
-          <div class="bg-white rounded-xl card-shadow p-5">
-            <div class="text-sm font-medium text-gray-700 mb-4">挤出系统</div>
-            <div class="grid grid-cols-2 gap-x-8 gap-y-4">
-              <div>
-                <div class="flex items-center gap-2 mb-2">
-                  <label class="text-sm text-gray-600">挤出机温度</label>
-                </div>
-                <div class="relative">
-                  <input type="number" value="210" class="input-field w-full px-4 py-2.5 rounded-lg text-sm text-right pr-10">
-                  <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">°C</span>
-                </div>
-              </div>
-              <div>
-                <div class="flex items-center gap-2 mb-2">
-                  <label class="text-sm text-gray-600">热床温度</label>
-                </div>
-                <div class="relative">
-                  <input type="number" value="60" class="input-field w-full px-4 py-2.5 rounded-lg text-sm text-right pr-10">
-                  <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">°C</span>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
