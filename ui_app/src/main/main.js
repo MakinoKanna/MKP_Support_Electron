@@ -141,12 +141,13 @@ if (isCliMode) {
 
   function createWindow() {
     const mainWindow = new BrowserWindow({
-      width: 940,
-      height: 630,      // 加上 30px 补偿
-      minWidth: 940,
-      minHeight: 630,   // 加上 30px 补偿
+      width: 934,
+      height: 646,      // 加上 30px 补偿
+      minWidth: 934,
+      minHeight: 646,   // 加上 30px 补偿
       useContentSize: false, // 彻底关掉内容计算，解决 580px 挤压 bug
       autoHideMenuBar: true, // 隐藏菜单栏
+      backgroundColor: '#1A1D1F',
       webPreferences: {
         preload: path.join(__dirname, '../../preload.js'),
         contextIsolation: true

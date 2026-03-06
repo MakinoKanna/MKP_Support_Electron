@@ -279,7 +279,7 @@ async function checkOnlineUpdates() {
   
   onlineList.innerHTML = `
     <div class="p-8 flex flex-col items-center justify-center text-center space-y-3">
-      <svg class="w-8 h-8 text-blue-500 animate-spin" fill="none" viewBox="0 0 24 24">
+      <svg class="w-8 h-8 theme-text animate-spin" fill="none" viewBox="0 0 24 24">
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
       </svg>
@@ -661,7 +661,8 @@ function renderVersionCards(containerId, printerData, currentSelectedVersion, on
     const isSelected = currentSelectedVersion === vType;
     const card = document.createElement('div');
     
-    card.className = `version-card group bg-white dark:bg-[#252526] rounded-xl border p-4 cursor-pointer transition-all duration-200 hover:shadow-sm ${isSelected ? 'selected border-blue-500' : 'border-gray-200 dark:border-[#333333] hover:border-blue-300'}`;
+    // 💡【核心修复】：将原本的 border-blue-500 替换为 theme-border
+    card.className = `version-card group bg-white dark:bg-[#252526] rounded-xl border p-4 cursor-pointer transition-all duration-200 hover:shadow-sm ${isSelected ? 'selected theme-border' : 'border-gray-200 dark:border-[#333333] hover:border-gray-300 dark:hover:border-[#444]'}`;
     
     card.onclick = () => {
       if (currentSelectedVersion === vType) {
@@ -682,7 +683,7 @@ function renderVersionCards(containerId, printerData, currentSelectedVersion, on
           </div>
           <p class="text-xs text-gray-500 truncate">${vInfo.desc}</p>
         </div>
-        <div class="check-indicator w-6 h-6 rounded-full border-2 ${isSelected ? 'border-transparent bg-blue-500' : 'border-gray-200 dark:border-[#444]'} flex items-center justify-center flex-shrink-0 transition-all duration-200">
+        <div class="check-indicator w-6 h-6 rounded-full border-2 ${isSelected ? 'border-transparent theme-bg-solid' : 'border-gray-200 dark:border-[#444]'} flex items-center justify-center flex-shrink-0 transition-all duration-200">
           <svg class="w-4 h-4 text-white ${isSelected ? 'opacity-100' : 'opacity-0'} transition-opacity duration-200" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
           </svg>
@@ -728,11 +729,11 @@ async function renderPresetList(printerData, versionType) {
       localEmpty.innerHTML = `<p class="text-sm text-gray-500 dark:text-gray-400">请先在上方选择「版本类型」</p>`;
     }
     if(localList) localList.classList.add('hidden');
-    if (step2Badge) step2Badge.classList.remove('text-blue-500');
+    if (step2Badge) step2Badge.classList.remove('theme-text');
     return;
   }
 
-  if (step2Badge) step2Badge.classList.add('text-blue-500');
+  if (step2Badge) step2Badge.classList.add('theme-text');
   
   const releases = await fetchCloudPresets(printerData.id, versionType);
   
@@ -796,17 +797,18 @@ function renderListItems(container, releases, printerData, versionType, isLocal)
     
     item.dataset.releaseId = release.id;
     item.className = 'collapse-item transition-all border-b border-gray-100 dark:border-[#333] last:border-b-0 bg-white dark:bg-gray-800';
-    
+
     let btnText = '下载';
-    let btnClass = 'theme-btn-soft cursor-pointer transition-all duration-200 active:scale-95 flex items-center justify-center min-w-[76px] rounded-lg px-4 py-1.5 text-xs font-medium';
-    
+    // 💡【修复Bug】：必须保留 dl-btn 作为事件绑定的锚点
+    let btnClass = 'dl-btn bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 dark:bg-[#333] dark:border-[#444] dark:text-gray-200 dark:hover:bg-[#444] rounded-lg px-4 py-1.5 text-xs font-medium transition-all duration-200 active:scale-95 flex items-center justify-center min-w-[76px]';
+
     if (isLocal) {
       if (isApplied) {
         btnText = '已应用';
-        btnClass = 'theme-btn-solid cursor-pointer transition-all duration-200 active:scale-95 flex items-center justify-center min-w-[76px] rounded-lg px-4 py-1.5 text-xs font-medium shadow-sm';
+        btnClass = 'dl-btn theme-btn-solid cursor-pointer transition-all duration-200 active:scale-95 flex items-center justify-center min-w-[76px] rounded-lg px-4 py-1.5 text-xs font-medium shadow-sm';
       } else {
         btnText = '应用';
-        btnClass = 'theme-btn-soft cursor-pointer transition-all duration-200 active:scale-95 flex items-center justify-center min-w-[76px] rounded-lg px-4 py-1.5 text-xs font-medium';
+        btnClass = 'dl-btn theme-btn-soft cursor-pointer transition-all duration-200 active:scale-95 flex items-center justify-center min-w-[76px] rounded-lg px-4 py-1.5 text-xs font-medium';
       }
     }
 
@@ -814,14 +816,14 @@ function renderListItems(container, releases, printerData, versionType, isLocal)
       <div class="preset-header px-5 py-3.5 flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-[#2A2D2E] transition-colors">
         <div class="flex items-center gap-3">
           <span class="text-sm font-bold text-gray-900 dark:text-gray-100">${presetNamePrefix} ${release.id}</span>
-          ${release.isLatest ? '<span class="px-2 py-0.5 rounded text-[10px] font-medium bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-400">最新</span>' : ''}
-          ${isApplied ? `<span class="badge-solid-primary px-2 py-0.5 rounded text-[10px] font-medium flex items-center gap-1 shadow-sm"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>当前使用</span>` : ''}
+          ${release.isLatest ? '<span class="px-2 py-0.5 rounded text-[10px] font-medium theme-bg-soft">最新</span>' : ''}
+          ${isApplied ? '<span class="px-2 py-0.5 rounded text-[10px] font-medium theme-btn-solid flex items-center gap-1 shadow-sm"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>当前使用</span>' : ''}
           <span class="text-xs text-gray-400 ml-2 hidden sm:inline">发布于 ${release.date}</span>
         </div>
         
         <div class="flex items-center gap-4">
           <div class="flex items-center gap-2">
-            <button class="dl-btn px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${btnClass}">
+            <button class="${btnClass}">
               ${btnText}
             </button>
             
@@ -831,7 +833,7 @@ function renderListItems(container, releases, printerData, versionType, isLocal)
             </button>
             ` : ''}
           </div>
-              <svg class="w-5 h-5 text-gray-400 collapse-arrow transition-transform duration-200 group-hover:theme-text" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+              <svg class="w-5 h-5 text-gray-400 collapse-arrow transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
           </div>
       </div>
       <div class="collapse-wrapper">
@@ -859,15 +861,17 @@ function renderListItems(container, releases, printerData, versionType, isLocal)
     });
 
     const dlBtn = item.querySelector('.dl-btn');
-    dlBtn.addEventListener('click', async (e) => {
-      e.stopPropagation(); 
-      if (isLocal) {
-        // 【核心修复 2】：去掉拦截，永远允许点击，并且把按钮元素本身传过去做动画
-        handleApplyLocal(release.id, release.fileName, printerData, dlBtn);
-      } else {
-        handleDownloadOnline(release.id, release.fileName, dlBtn);
-      }
-    });
+    if(dlBtn) {
+      dlBtn.addEventListener('click', async (e) => {
+        e.stopPropagation(); 
+        if (isLocal) {
+          // 【核心修复 2】：去掉拦截，永远允许点击，并且把按钮元素本身传过去做动画
+          handleApplyLocal(release.id, release.fileName, printerData, dlBtn);
+        } else {
+          handleDownloadOnline(release.id, release.fileName, dlBtn);
+        }
+      });
+    }
 
     if (isLocal) {
       const deleteBtn = item.querySelector('.delete-btn');
@@ -888,16 +892,18 @@ function selectVersion(card, version) {
   
   document.querySelectorAll('.version-card').forEach(c => {
     c.classList.remove('selected');
-    c.querySelector('.check-indicator').style.borderColor = '#E5E7EB';
-    c.querySelector('.check-indicator').style.backgroundColor = 'transparent';
+    c.classList.remove('theme-border');
+    c.classList.add('border-gray-200', 'dark:border-[#333333]');
+    c.querySelector('.check-indicator').className = 'check-indicator w-6 h-6 rounded-full border-2 border-gray-200 dark:border-[#444] flex items-center justify-center flex-shrink-0 transition-all duration-200';
     c.querySelector('.check-indicator svg').style.opacity = '0';
     updateWizardButtons();
   });
   
-  card.classList.add('selected');
+  card.classList.add('selected', 'theme-border');
+  card.classList.remove('border-gray-200', 'dark:border-[#333333]');
+  
   const checkIndicator = card.querySelector('.check-indicator');
-  checkIndicator.style.borderColor = 'var(--accent-blue)';
-  checkIndicator.style.backgroundColor = 'var(--accent-blue)';
+  checkIndicator.className = 'check-indicator w-6 h-6 rounded-full border-2 border-transparent theme-bg-solid flex items-center justify-center flex-shrink-0 transition-all duration-200';
   checkIndicator.querySelector('svg').style.opacity = '1';
   
   const dateSelect = document.getElementById('dateSelect');
@@ -944,13 +950,13 @@ function renderVersions() {
     let btnClass = 'bg-gray-100 text-gray-700 hover:bg-gray-200';
 
     if (type === 'stable') {
-      badgeClass = 'bg-green-100 text-green-800';
+      badgeClass = 'theme-bg-soft';
       btnText = version.current ? '已是最新' : '下载并更新';
-      btnClass = 'bg-blue-600 text-white hover:bg-blue-700';
+      btnClass = 'theme-btn-solid';
     } else if (type === 'beta') {
-      badgeClass = 'bg-purple-100 text-purple-800';
+      badgeClass = 'bg-purple-100 text-purple-800 dark:bg-purple-500/20 dark:text-purple-400';
       btnText = '立即尝鲜';
-      btnClass = 'bg-purple-50 text-purple-600 hover:bg-purple-100';
+      btnClass = 'theme-btn-soft';
     }
 
     return `
@@ -972,7 +978,7 @@ function renderVersions() {
         <div class="space-y-1">
           ${version.details.map(detail => `
             <div class="flex items-start gap-2 text-xs text-gray-500">
-              <svg class="w-3.5 h-3.5 text-blue-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              <svg class="w-3.5 h-3.5 theme-text mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
               <span>${detail}</span>
             </div>
           `).join('')}
@@ -1016,7 +1022,7 @@ async function handleDownloadOnline(releaseId, fileName, btnElement) {
 
   btnElement.disabled = true;
   btnElement.innerHTML = `
-    <svg class="w-4 h-4 animate-spin text-blue-500 mr-1 inline" fill="none" viewBox="0 0 24 24">
+    <svg class="w-4 h-4 animate-spin theme-text mr-1 inline" fill="none" viewBox="0 0 24 24">
       <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
       <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
     </svg>下载中
@@ -1046,11 +1052,8 @@ async function handleDownloadOnline(releaseId, fileName, btnElement) {
           newCard.style.transform = 'scale(1.01)'; 
           newCard.style.boxShadow = isDark ? '0 8px 20px rgba(0,0,0,0.5)' : '0 8px 20px rgba(0,0,0,0.08)'; 
 
-          if (isDark) {
-            newCard.style.backgroundColor = 'rgba(34, 197, 94, 0.15)'; 
-          } else {
-            newCard.style.backgroundColor = '#ecfdf5'; 
-          }
+          // 给卡片背景加一点当前的动态颜色
+          newCard.style.backgroundColor = 'rgba(var(--primary-rgb), 0.1)'; 
 
           requestAnimationFrame(() => {
             setTimeout(() => {
@@ -1086,7 +1089,7 @@ async function handleDownloadOnline(releaseId, fileName, btnElement) {
 }
 
 // ============================================================
-// 极其纯粹的 本地应用 (支持重复点击刷新动画)
+// 极其纯粹的 本地应用 (支持重复点击刷新动画，已修复丢类名Bug)
 // ============================================================
 function handleApplyLocal(releaseId, fileName, printerData, clickedBtn = null) {
   // 1. 强制覆盖保存应用状态和文件名，彻底解决旧数据导致的路径卡死 Bug
@@ -1102,33 +1105,38 @@ function handleApplyLocal(releaseId, fileName, printerData, clickedBtn = null) {
   for (let i = 0; i < cards.length; i++) {
     const card = cards[i];
     const isThisCardApplied = (card.dataset.releaseId === releaseId);
+    
+    // 🚨 核心锚点：靠 .dl-btn 找到按钮
     const btn = card.querySelector('.dl-btn');
     const badgeContainer = card.querySelector('.preset-header .flex.items-center.gap-3');
 
     if (isThisCardApplied) {
       if (btn) {
-        // 核心：判断当前是不是“重新应用”的点击
+        // 判断当前是不是“重新应用”的点击
         const isReapply = (btn.textContent.trim() === '已应用') && (btn === clickedBtn);
         
-        // 恢复为基础的“已应用”样式，去除禁止点击，加入按下特效
-        btn.className = 'dl-btn px-4 py-1.5 rounded-lg text-xs font-medium transition-all bg-blue-500 text-white cursor-pointer hover:bg-blue-600 shadow-sm active:scale-95 flex items-center justify-center min-w-[76px]';
+        // 💡 修复：确保 className 永远包含 'dl-btn' 和 'theme-btn-solid'
+        btn.className = 'dl-btn theme-btn-solid cursor-pointer transition-all duration-200 active:scale-95 flex items-center justify-center min-w-[76px] rounded-lg px-4 py-1.5 text-xs font-medium shadow-sm';
         
         if (isReapply) {
           // 【重新应用动画】：转圈 -> 变绿提示 -> 恢复
           btn.innerHTML = `<svg class="w-3.5 h-3.5 mr-1 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>刷新`;
           
           setTimeout(() => {
-            btn.innerHTML = `<svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>已更新`;
-            // 去掉原来的 bg-green-500，强行赋内联样式或者加一个新类（为了省事，这里直接改 text）
-            btn.style.backgroundColor = '#10B981'; // 临时变绿
+            btn.innerHTML = `<svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>已应用`;
+            // 临时变绿
+            btn.style.backgroundColor = '#10B981'; 
+            btn.style.color = '#FFFFFF';
             
             setTimeout(() => {
               btn.innerHTML = '已应用';
-              btn.style.backgroundColor = ''; // 恢复主题色
+              // 移除内联样式，恢复到 theme-btn-solid 的全局主题色
+              btn.style.backgroundColor = ''; 
+              btn.style.color = '';
             }, 1200);
           }, 500);
         } else {
-          // 第一次点击应用，瞬间变蓝即可
+          // 第一次点击应用，瞬间变即可
           btn.innerHTML = '已应用';
         }
       }
@@ -1145,7 +1153,8 @@ function handleApplyLocal(releaseId, fileName, printerData, clickedBtn = null) {
       // 剥夺其他卡片的“已应用”状态
       if (btn) {
         btn.innerHTML = '应用';
-        btn.className = 'theme-btn-soft cursor-pointer transition-all duration-200 active:scale-95 flex items-center justify-center min-w-[76px] rounded-lg px-4 py-1.5 text-xs font-medium';
+        // 💡 修复：绝对不能把 'dl-btn' 弄丢了！
+        btn.className = 'dl-btn theme-btn-soft cursor-pointer transition-all duration-200 active:scale-95 flex items-center justify-center min-w-[76px] rounded-lg px-4 py-1.5 text-xs font-medium';
       }
       if (badgeContainer) {
         const badges = Array.from(badgeContainer.children);
@@ -1565,7 +1574,7 @@ async function renderDynamicParamsPage() {
   const container = document.getElementById('dynamicParamsContainer');
   if (!container) return;
   
-  container.innerHTML = `<div class="col-span-2 py-10 text-center text-gray-500"><svg class="w-8 h-8 animate-spin mx-auto text-blue-500 mb-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>正在读取 JSON 预设文件...</div>`;
+  container.innerHTML = `<div class="col-span-2 py-10 text-center text-gray-500"><svg class="w-8 h-8 animate-spin mx-auto theme-text mb-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>正在读取 JSON 预设文件...</div>`;
 
   const preset = await loadActivePreset();
   if (!preset) {
@@ -1587,7 +1596,7 @@ async function renderDynamicParamsPage() {
     html += `
       <div class="bg-gray-50 dark:bg-[#1E1E1E] rounded-xl p-3 border border-gray-100 dark:border-[#333] flex flex-col justify-center">
         <label class="text-xs text-gray-500 block mb-1.5 break-all font-mono">${key}</label>
-        <input type="text" data-json-key="${key}" value='${val}' class="dynamic-param-input input-field w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-[#252526] border border-gray-200 dark:border-[#444] transition-all focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+        <input type="text" data-json-key="${key}" value='${val}' class="dynamic-param-input input-field theme-ring w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-[#252526] border border-gray-200 dark:border-[#444] transition-all">
       </div>
     `;
   }
@@ -1625,10 +1634,10 @@ async function saveAllDynamicParams() {
   
   if(result.success) {
     saveBtn.innerHTML = `<svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>保存成功`;
-    saveBtn.classList.replace('bg-blue-600', 'bg-green-500');
+    saveBtn.style.backgroundColor = '#10B981';
     setTimeout(() => {
       saveBtn.innerHTML = '保存所有修改';
-      saveBtn.classList.replace('bg-green-500', 'bg-blue-600');
+      saveBtn.style.backgroundColor = '';
     }, 2000);
   } else {
     alert("保存失败: " + result.error);
@@ -1663,7 +1672,7 @@ async function updateScriptPathDisplay() {
     if (copyBtn) {
       copyBtn.disabled = false;
       copyBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-      copyBtn.classList.add('hover:border-blue-500', 'hover:text-blue-500');
+      copyBtn.classList.add('hover-theme');
     }
   } catch (e) {
     console.error("生成脚本路径失败:", e);
@@ -1677,19 +1686,11 @@ function copyPath() {
   document.execCommand('copy');
   
   const copyBtn = document.getElementById('scriptCopyBtn');
-  copyBtn.innerHTML = `
-    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-    </svg>
-  `;
+  copyBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>`;
   copyBtn.title = '已复制';
   
   setTimeout(() => {
-    copyBtn.innerHTML = `
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184"/>
-      </svg>
-    `;
+    copyBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184"/></svg>`;
     copyBtn.title = '复制路径';
   }, 2000);
 }
@@ -1743,7 +1744,7 @@ function generateZGrid() {
   const offsets = [-0.4, -0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4];
   offsets.forEach(offset => {
     const gridItem = document.createElement('div');
-    gridItem.className = 'w-12 h-12 border border-gray-200 flex items-center justify-center cursor-pointer hover:border-blue-300 transition-colors';
+    gridItem.className = 'w-12 h-12 border border-gray-200 dark:border-[#444] flex items-center justify-center cursor-pointer transition-colors';
     gridItem.textContent = offset.toFixed(1);
     gridItem.onclick = () => selectZOffset(offset);
     zGrid.appendChild(gridItem);
@@ -1811,7 +1812,7 @@ function generateXYGrid() {
     row.className = 'flex';
     for (let x = -2; x <= 2; x++) {
       const gridItem = document.createElement('div');
-      gridItem.className = 'w-16 h-16 border border-gray-200 flex items-center justify-center cursor-pointer hover:border-blue-300 transition-colors';
+      gridItem.className = 'w-16 h-16 border border-gray-200 dark:border-[#444] flex items-center justify-center cursor-pointer transition-colors';
       gridItem.textContent = `${x},${y}`;
       gridItem.onclick = () => selectXYOffset(x, y);
       row.appendChild(gridItem);

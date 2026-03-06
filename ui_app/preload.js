@@ -14,5 +14,7 @@ contextBridge.exposeInMainWorld('mkpAPI', {
   writePreset: (filePath, updates) => ipcRenderer.invoke('write-preset', filePath, updates),
 
   // 【新增】：智能打开校准模型
-  openCalibrationModel: (type, forceOpenWith) => ipcRenderer.invoke('open-calibration-model', type, forceOpenWith)
+  openCalibrationModel: (type, forceOpenWith) => ipcRenderer.invoke('open-calibration-model', type, forceOpenWith),
+  setNativeTheme: (mode) => ipcRenderer.send('set-native-theme', mode)
+
 });

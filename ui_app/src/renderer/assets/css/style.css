@@ -1,27 +1,30 @@
-/* ==================== 1. CSS变量定义 ==================== */
+/* ==================== 1. CSS 变量定义 ==================== */
 :root {
   /* 🚀 核心：由 theme.js 动态接管的主色调 RGB */
   --primary-rgb: 59, 130, 246; 
   /* 将原来的写死颜色，全部代理到我们动态的 RGB 变量上 */
   --accent-blue: rgb(var(--primary-rgb));       
   --accent-blue-light: rgba(var(--primary-rgb), 0.1);
+  --border-focus: rgb(var(--primary-rgb)); 
+  --shadow-button: 0 2px 4px rgba(var(--primary-rgb), 0.25);
+  
+  /* 基础页面色彩 */
   --bg-page: #F5F6F8;           
   --bg-card: #FFFFFF;           
   --bg-input: #F9FAFB;          
   --bg-disabled: #F3F4F6;       
   --border: #E5E7EB;            
-  --border-focus: #3B82F6;      
   --text-primary: #111827;      
   --text-secondary: #6B7280;    
   --text-muted: #9CA3AF;        
-  --accent-blue: #3B82F6;       
-  --accent-blue-light: #EFF6FF; 
   --accent-green: #10B981;      
   --accent-yellow: #F59E0B;     
+  
+  /* 阴影 */
   --shadow-card: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);    
   --shadow-hover: 0 4px 12px rgba(0,0,0,0.08);                               
-  --shadow-button: 0 2px 4px rgba(59,130,246,0.25);                          
-  
+
+  /* 版本专属色 (默认) */
   --theme-standard-text: #3B82F6;
   --theme-standard-bg: #EFF6FF;
   --theme-quick-text: #F59E0B;
@@ -30,17 +33,17 @@
   --theme-lite-bg: #FAF5FF;
 }
 
+/* ==================== 2. 基础全局样式 ==================== */
+* {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  box-sizing: border-box;
+}
+
 /* 隐身滚动条特效 */
 * { scrollbar-width: none; }
 ::-webkit-scrollbar { display: none; }
 .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 .hide-scrollbar::-webkit-scrollbar { display: none; }
-
-/* ==================== 2. 基础样式 ==================== */
-* {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  box-sizing: border-box;
-}
 
 body {
   background: var(--bg-page);
@@ -50,12 +53,15 @@ body {
   min-width: 920px;
 }
 
+.page > div, .page > p { max-width: 56rem !important; margin-left: auto !important; margin-right: auto !important; width: 100% !important; }
+
 /* 基础组件阴影与动画 */
 .card-shadow { box-shadow: var(--shadow-card); }
 .card-shadow:hover { box-shadow: var(--shadow-hover); }
 
+/* 旧版按钮样式预留 */
 .btn-primary { background: var(--accent-blue); color: white; box-shadow: var(--shadow-button); transition: all 0.2s ease; }
-.btn-primary:hover:not(:disabled) { background: #2563EB; transform: translateY(-1px); }
+.btn-primary:hover:not(:disabled) { filter: brightness(1.1); transform: translateY(-1px); }
 .btn-primary:disabled { background: #D1D5DB; box-shadow: none; cursor: not-allowed; }
 
 .btn-secondary { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-primary); transition: all 0.2s ease; }
@@ -65,7 +71,7 @@ body {
 .input-field:focus { outline: none; background: var(--bg-card); border-color: var(--border-focus); }
 .input-readonly { background: var(--bg-disabled); color: var(--text-secondary); }
 
-/* ==================== 3. 侧边栏折叠动画 ==================== */
+/* ==================== 3. 侧边栏与导航动画 ==================== */
 .sidebar-wrapper, #sidebar { transition: width 0.35s cubic-bezier(0.2, 0, 0, 1); }
 .sidebar-wrapper-collapsed, .sidebar-collapsed { width: 72px !important; }
 .sidebar-text { transition: opacity 0.2s cubic-bezier(0.2, 0, 0, 1); white-space: nowrap; opacity: 1; }
@@ -78,14 +84,8 @@ body {
 #sidebarBrandSpace { width: 4px; }
 .sidebar-collapsed #sidebarBrandSpace { width: 0px; }
 
-#sidebar button {
-  color: var(--text-secondary); 
-  transition: all 0.35s cubic-bezier(0.2, 0, 0, 1);
-  overflow: hidden;
-}
+#sidebar button { color: var(--text-secondary); transition: all 0.35s cubic-bezier(0.2, 0, 0, 1); overflow: hidden; }
 #sidebar button:hover { color: var(--text-primary); }
-#sidebar button.active { color: var(--accent-blue); }
-html.dark #sidebar button.active { color: #60A5FA; }
 
 .sidebar-collapsed #sidebar button {
   padding-left: 0 !important;
@@ -101,14 +101,15 @@ html.dark #sidebar button.active { color: #60A5FA; }
 }
 #sidebar button svg { transform: translateX(1.5px); }
 #sidebar {
-  /* 告诉浏览器：这个元素的宽度未来会变，请提前分配显卡层，不要临时抱佛脚 */
   will-change: width;
-  
-  /* 强制开启 GPU 硬件加速的古老魔法 */
   transform: translateZ(0); 
+  width: 100% !important;
 }
-/* ==================== 4. 其它 UI 组件 ==================== */
-/* 智能机型名称前缀折叠动画 */
+
+.nav-item { transition: all 0.15s ease; }
+.nav-item:hover { background: #F3F4F6; }
+
+/* ==================== 4. 卡片与列表组件 ==================== */
 .brand-prefix {
   max-width: 120px; opacity: 1; white-space: nowrap; overflow: hidden;
   transition: max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -118,12 +119,16 @@ html.dark #sidebar button.active { color: #60A5FA; }
   #sidebarWrapper:not(.sidebar-wrapper-collapsed) ~ main .brand-prefix { max-width: 0 !important; opacity: 0 !important; margin-right: 0 !important; }
 }
 
-#sidebar { width: 100% !important; }
-
-/* 基础卡片边框 (统一使用 1.5px 防止选中时抖动) */
-.select-card { border: 1.5px solid var(--border); transition: all 0.2s ease; position: relative; }
-.brand-card { border: 1.5px solid transparent; transition: all 0.2s ease; cursor: pointer; }
+/* 基础卡片边框设定 */
+.brand-card, .select-card, .version-card, .mode-btn-light, .mode-btn-dark, .mode-btn-system {
+  border-width: 1.5px !important;
+  border-style: solid !important;
+  border-color: transparent; 
+  transition: all 0.2s ease;
+}
+.select-card { border-color: var(--border); position: relative; }
 .select-card:not(.selected):hover { border-color: #D1D5DB; }
+.brand-card { cursor: pointer; }
 .brand-card:hover { background: #F9FAFB; }
 
 .printer-card-disabled { opacity: 0.5; pointer-events: none; }
@@ -133,13 +138,35 @@ html.dark #sidebar button.active { color: #60A5FA; }
 .star-icon.not-favorited { color: #D1D5DB; stroke-dasharray: 2 1; }
 .brand-card.favorited { order: -1; }
 
-.nav-item { transition: all 0.15s ease; }
-.nav-item:hover { background: #F3F4F6; }
-.nav-item.active { background: var(--accent-blue-light); color: var(--accent-blue); }
+/* macOS 风格列表 */
+.macos-list { background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 8px; padding: 4px; }
+.model-list-item { padding: 10px 12px; margin-bottom: 2px; border-radius: 6px; cursor: pointer; font-size: 13px; color: #374151; transition: all 0.2s ease; display: block; }
+.model-list-item:hover { background-color: #F3F4F6; }
 
-.page > div, .page > p { max-width: 56rem !important; margin-left: auto !important; margin-right: auto !important; width: 100% !important; }
+/* 引导页步骤条默认状态 */
+.step-item { transition: all 0.3s ease; cursor: pointer; }
+.step-number { transition: all 0.3s ease; background-color: #E5E7EB !important; color: #9CA3AF !important; }
+.step-text { transition: all 0.3s ease; color: #9CA3AF !important; }
 
-/* ==================== 5. 暗黑模式基础色彩 ==================== */
+/* ==================== 5. 动画与手风琴组件 ==================== */
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+.animate-scale-in { animation: scaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+.collapse-wrapper { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.25s ease-out; }
+.collapse-wrapper.is-expanded { grid-template-rows: 1fr; }
+.collapse-inner { overflow: hidden; }
+.collapse-arrow { transition: transform 0.25s ease; }
+.collapse-item.expanded .collapse-arrow { transform: rotate(180deg); }
+
+/* View Transitions 修复 */
+::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+::view-transition-old(root) { z-index: 1; }
+::view-transition-new(root) { z-index: 2; }
+
+/* ==================== 6. 暗黑模式基础重写 ==================== */
 html.dark {
   --bg-page: #1E1E1E;
   --bg-card: #252526;
@@ -148,13 +175,6 @@ html.dark {
   --border: #3E3E42;
   --text-primary: #D4D4D4;
   --text-secondary: #858585;
-  --accent-blue-light: rgba(59, 130, 246, 0.15);
-  --theme-standard-bg: rgba(59, 130, 246, 0.15);
-  --theme-standard-text: #60A5FA;
-  --theme-quick-bg: rgba(245, 158, 11, 0.15);
-  --theme-quick-text: #FBBF24;
-  --theme-lite-bg: rgba(168, 85, 247, 0.15);
-  --theme-lite-text: #C084FC;
 }
 
 html.dark body { background-color: var(--bg-page); color: var(--text-primary); }
@@ -181,399 +201,51 @@ html.dark .btn-secondary { background-color: #333333 !important; border-color: #
 html.dark .btn-secondary:hover { background-color: #3A3A3A !important; border-color: #555555 !important; }
 html.dark .btn-primary:disabled { background-color: #333333 !important; color: #666666 !important; }
 
-html.dark .step-number { background-color: #333333 !important; color: #858585 !important; }
-html.dark .step-item.active .step-number { background-color: var(--accent-blue) !important; color: #ffffff !important; }
-html.dark .step-item.completed .step-number { background-color: var(--accent-green) !important; color: #ffffff !important; }
 html.dark #onboarding .border-gray-100 { border-color: #333333 !important; }
-
-
-/* ============================================================
-   终极质感：全局统一 1.5px 极细边框 + 文字变色高亮
-   (覆盖：左侧品牌、右侧机型、设置页主题卡片)
-   ============================================================ */
-
-/* --- 1. 明亮模式 --- */
-.brand-card.active,
-.select-card.selected,
-html[data-theme-mode="light"] .mode-btn-light,
-html[data-theme-mode="dark"] .mode-btn-dark,
-html[data-theme-mode="system"] .mode-btn-system {
-  /* 统一 1.5px 边框，无阴影，防抖动 */
-  border: 1.5px solid var(--accent-blue, #3b82f6) !important; 
-  box-shadow: none !important; 
-  background-color: var(--accent-blue-light, #eff6ff) !important;
-}
-
-/* 明亮模式文字变色 */
-.brand-card.active div,
-.brand-card.active span,
-.select-card.selected div,
-.select-card.selected span,
-html[data-theme-mode="light"] .mode-text-light,
-html[data-theme-mode="dark"] .mode-text-dark,
-html[data-theme-mode="system"] .mode-text-system {
-  color: var(--accent-blue, #3b82f6) !important;
-}
-
-/* --- 2. 暗黑模式 --- */
-html.dark .brand-card.active,
-html.dark .select-card.selected,
-html.dark .select-card.selected:hover,
-html.dark[data-theme-mode="light"] .mode-btn-light,
-html.dark[data-theme-mode="dark"] .mode-btn-dark,
-html.dark[data-theme-mode="system"] .mode-btn-system {
-  border: 1.5px solid var(--accent-blue, #3b82f6) !important;
-  box-shadow: none !important; 
-  background-color: rgba(59, 130, 246, 0.15) !important; 
-}
-
-/* 暗黑模式文字变色 */
-html.dark .brand-card.active div,
-html.dark .brand-card.active span,
-html.dark .select-card.selected div,
-html.dark .select-card.selected span,
-html.dark[data-theme-mode="light"] .mode-text-light,
-html.dark[data-theme-mode="dark"] .mode-text-dark,
-html.dark[data-theme-mode="system"] .mode-text-system {
-  color: #60a5fa !important; 
-}
-
-/* View Transitions 修复 */
-::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
-::view-transition-old(root) { z-index: 1; }
-::view-transition-new(root) { z-index: 2; }
-
-/* ============================================================
-   暗黑模式细节修复：设置页面开关与未选中卡片边框
-   ============================================================ */
-
-/* 1. 修复：暗黑模式下“外观与主题”未选中卡片的刺眼白边框 */
-html.dark .mode-btn-light,
-html.dark .mode-btn-dark,
-html.dark .mode-btn-system {
-  border-color: #333333 !important; /* 统一改为与其他卡片一致的暗灰边框 */
-}
-
-/* 2. 修复：暗黑模式下 Switch 开关太刺眼的问题 */
-/* 未选中时的滑道颜色（改为深灰色） */
-html.dark input[type="checkbox"]:not(:checked) + div {
-  background-color: #3E3E42 !important; 
-}
-
-/* 滑块圆点的颜色（把纯白色降级为柔和的浅灰色） */
-html.dark input[type="checkbox"] + div::after {
-  background-color: #A3A3A3 !important;
-  border-color: transparent !important;
-}
-
-/* 开启状态时，滑块微微提亮，但依然拒绝刺眼的纯白 */
-html.dark input[type="checkbox"]:checked + div::after {
-  background-color: #E5E7EB !important;
-}
-
-/* ============================================================
-   紧急修复：新手引导页 (Onboarding) 与弹窗核心样式包
-   ============================================================ */
-
-/* 1. 弹窗缩放动画 (极其重要，没它弹窗出不来) */
-@keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
-}
-.animate-scale-in {
-  animation: scaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-/* 2. macOS 风格列表容器 */
-.macos-list {
-  background: white;
-  border: 1px solid #D1D1D6;
-  border-radius: 6px;
-  box-shadow: inset 0 1px 2px rgba(0,0,0,0.06);
-}
-.model-list-item {
-  padding: 6px 8px;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-.model-list-item:hover { background: #F5F5F7; }
-.model-list-item.selected { background: var(--accent-blue-light); }
-
-/* 3. 顶部步骤条样式 (Step Indicator) */
-.step-item { transition: all 0.3s ease; cursor: pointer; }
-.step-number { transition: all 0.3s ease; }
-.step-text { transition: all 0.3s ease; }
-
-/* 激活状态 */
-.step-item.active .step-number { background: var(--accent-blue); color: white; }
-.step-item.active .step-text { color: var(--accent-blue); }
-/* 完成状态 */
-.step-item.completed .step-number { background: var(--accent-green); color: white; }
-.step-item.completed .step-text { color: var(--accent-green); }
-
-/* 4. 版本选择卡片 */
-.version-card { transition: all 0.2s ease; }
-.version-card.selected {
-  border-color: var(--accent-blue) !important;
-  background-color: var(--accent-blue-light) !important;
-}
-.version-card.selected .check-indicator {
-  background-color: var(--accent-blue);
-  border-color: var(--accent-blue);
-}
-.version-card.selected .check-indicator svg { opacity: 1; }
-
-/* 5. 引导页暗黑模式适配补丁 */
-html.dark .macos-list {
-  background: #252526;
-  border-color: #333333;
-}
-html.dark .model-list-item:hover { background: #2A2D2E; }
-html.dark .model-list-item.selected { background: rgba(59, 130, 246, 0.15); }
-html.dark .step-number { background-color: #333333; color: #858585; }
-html.dark .step-item.active .step-number { background-color: var(--accent-blue); color: white; }
-html.dark .step-item.completed .step-number { background-color: var(--accent-green); color: white; }
-html.dark .version-card { background: #252526; border-color: #333333; }
-
-/* ============================================================
-   紧急修复 2.0：彻底解决引导页黑块、无样式、按钮失效问题
-   ============================================================ */
-
-/* 1. 强制修复暗黑模式下，引导页弹窗白底刺眼 / 列表变黑块的 Bug */
 html.dark #onboarding .bg-white { background-color: #252526 !important; }
-html.dark #onboarding h1, 
-html.dark #onboarding span.text-gray-700 { color: #D4D4D4 !important; }
+html.dark #onboarding h1, html.dark #onboarding span.text-gray-700 { color: #D4D4D4 !important; }
 html.dark #onboarding .text-gray-400 { color: #858585 !important; }
+html.dark .macos-list { background: #1E1E1E !important; border-color: #333333 !important; }
+html.dark .model-list-item { color: #D4D4D4; }
+html.dark .step-number { background-color: #333333 !important; color: #858585 !important; }
+html.dark .step-text { color: #858585 !important; }
+html.dark .mode-btn-light, html.dark .mode-btn-dark, html.dark .mode-btn-system { border-color: #333333 !important; }
+html.dark input[type="checkbox"]:not(:checked) + div { background-color: #3E3E42 !important; }
+html.dark input[type="checkbox"] + div::after { background-color: #A3A3A3 !important; border-color: transparent !important; }
+html.dark input[type="checkbox"]:checked + div::after { background-color: #E5E7EB !important; }
 
-/* 2. 完美还原 macOS 风格列表容器 */
-.macos-list {
-  background: #FFFFFF;
-  border: 1px solid #E5E7EB;
-  border-radius: 8px;
-  padding: 4px;
-}
-html.dark .macos-list {
-  background: #1E1E1E !important;
-  border-color: #333333 !important;
-}
-
-/* 3. 列表项的精准排版与颜色 (解决挤在一起、不亮蓝的问题) */
-.model-list-item {
-  padding: 10px 12px;
-  margin-bottom: 2px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 13px;
-  color: #374151; /* 强制浅色文字 */
-  transition: all 0.2s ease;
-  display: block;
-}
-html.dark .model-list-item { color: #D4D4D4; /* 强制深色文字 */ }
-
-.model-list-item:hover { background-color: #F3F4F6; }
-html.dark .model-list-item:hover { background-color: #2A2D2E; }
-
-/* 核心：选中状态强制高亮！ */
-.model-list-item.selected {
-  background-color: var(--accent-blue-light, #EFF6FF) !important;
-  color: var(--accent-blue, #3B82F6) !important;
-  font-weight: 500;
-}
-html.dark .model-list-item.selected {
-  background-color: rgba(59, 130, 246, 0.15) !important;
-  color: #60A5FA !important;
-}
-/* ============================================================
-   引导页终极样式微调：纯白步骤数字 + 版本卡片边框
-   ============================================================ */
-
-/* 强制明暗模式下的激活步骤文字为纯白色！ */
-.step-item.active .step-number,
-.step-item.completed .step-number,
-html.dark .step-item.active .step-number,
-html.dark .step-item.completed .step-number {
-  color: #ffffff !important;
-}
-
-/* 版本选择卡片的高亮边框与底色 */
-.version-card.selected {
-  border-color: var(--accent-blue, #3B82F6) !important;
-  background-color: var(--accent-blue-light, #EFF6FF) !important;
-}
-html.dark .version-card.selected {
-  border-color: var(--accent-blue, #3B82F6) !important;
-  background-color: rgba(59, 130, 246, 0.15) !important;
-}
 
 /* ============================================================
-   终极质感防线：全局 1.5px 极细纯净边框强制接管
-   (涵盖：品牌、机型、版本卡片、外观主题卡片)
+   7. 全局动态主题 CSS 类与颜色强制接管 (最终唯一生效的逻辑)
    ============================================================ */
 
-/* --- 0. 统一基础状态厚度为 1.5px (防抖动) --- */
-.brand-card,
-.select-card,
-.version-card,
-.mode-btn-light, 
-.mode-btn-dark, 
-.mode-btn-system {
-  border-width: 1.5px !important;
-  border-style: solid !important;
-}
+/* --- A. 基础主题类与填充 --- */
+.theme-text { color: rgb(var(--primary-rgb)) !important; }
+.theme-border { border-color: rgb(var(--primary-rgb)) !important; }
 
-/* --- 1. 明亮模式全局选中高亮 --- */
-.brand-card.active,
-.select-card.selected,
-.version-card.selected,
-html[data-theme-mode="light"] .mode-btn-light,
-html[data-theme-mode="dark"] .mode-btn-dark,
-html[data-theme-mode="system"] .mode-btn-system {
-  /* 纯净的 1.5px 蓝框 + 浅蓝底 */
-  border-color: var(--accent-blue, #3b82f6) !important; 
-  box-shadow: none !important; 
-  background-color: var(--accent-blue-light, #eff6ff) !important;
+/* 实体填充 (如：下一步按钮、已应用按钮) */
+.theme-btn-solid, .theme-bg-solid { 
+  background-color: rgb(var(--primary-rgb)) !important; 
+  color: white !important; 
+  border-color: rgb(var(--primary-rgb)) !important;
 }
-
-/* 明亮模式：强制选中卡片内的主标题变蓝 */
-.brand-card.active div,
-.brand-card.active span,
-.select-card.selected div,
-.select-card.selected span,
-.version-card.selected .font-semibold,
-html[data-theme-mode="light"] .mode-text-light,
-html[data-theme-mode="dark"] .mode-text-dark,
-html[data-theme-mode="system"] .mode-text-system {
-  color: var(--accent-blue, #3b82f6) !important;
-}
-
-/* --- 2. 暗黑模式全局选中高亮 --- */
-html.dark .brand-card.active,
-html.dark .select-card.selected,
-html.dark .version-card.selected,
-html.dark[data-theme-mode="light"] .mode-btn-light,
-html.dark[data-theme-mode="dark"] .mode-btn-dark,
-html.dark[data-theme-mode="system"] .mode-btn-system {
-  border-color: var(--accent-blue, #3b82f6) !important;
-  box-shadow: none !important; 
-  /* 暗黑专属的深蓝半透明底色 */
-  background-color: rgba(59, 130, 246, 0.15) !important; 
-}
-
-/* 暗黑模式：强制选中卡片内的主标题变亮蓝 */
-html.dark .brand-card.active div,
-html.dark .brand-card.active span,
-html.dark .select-card.selected div,
-html.dark .select-card.selected span,
-html.dark .version-card.selected .font-semibold,
-html.dark[data-theme-mode="light"] .mode-text-light,
-html.dark[data-theme-mode="dark"] .mode-text-dark,
-html.dark[data-theme-mode="system"] .mode-text-system {
-  color: #60a5fa !important; 
-}
-
-/* ============================================================
-   引导页步骤条：终极颜色强制接管（修复数字不白、文字不蓝的问题）
-   ============================================================ */
-
-/* --- 1. 默认未激活状态 --- */
-.step-number {
-  background-color: #E5E7EB !important; 
-  color: #9CA3AF !important; 
-}
-.step-text {
-  color: #9CA3AF !important;
-}
-
-/* 暗黑模式默认未激活 */
-html.dark .step-number {
-  background-color: #333333 !important;
-  color: #858585 !important;
-}
-html.dark .step-text {
-  color: #858585 !important;
-}
-
-/* --- 2. 激活状态 (Active) - 当前所在步骤 --- */
-.step-item.active .step-number,
-html.dark .step-item.active .step-number {
-  background-color: var(--accent-blue, #3B82F6) !important;
-  color: #FFFFFF !important; /* 强制圆圈内数字变为纯白！ */
-}
-.step-item.active .step-text,
-html.dark .step-item.active .step-text {
-  color: var(--accent-blue, #3B82F6) !important; /* 强制文字变亮蓝色！ */
-}
-
-/* --- 3. 完成状态 (Completed) - 已经走过的步骤 --- */
-.step-item.completed .step-number,
-html.dark .step-item.completed .step-number {
-  background-color: var(--accent-green, #10B981) !important;
-  color: #FFFFFF !important; /* 强制圆圈内数字变为纯白！ */
-}
-.step-item.completed .step-text,
-html.dark .step-item.completed .step-text {
-  color: var(--accent-green, #10B981) !important; /* 强制文字变绿色！ */
-}
-
-/* ============================================================
-   全局手风琴折叠动画引擎 (预设列表、常见问题 FAQ 共用)
-   ============================================================ */
-
-/* 1. 核心折叠逻辑：默认高度为 0，超出部分隐藏 */
-.collapse-wrapper {
-  display: grid;
-  grid-template-rows: 0fr;
-  transition: grid-template-rows 0.25s ease-out;
-}
-
-/* 2. 展开状态：高度自动适配内容 */
-.collapse-wrapper.is-expanded {
-  grid-template-rows: 1fr;
-}
-
-/* 3. 内部容器：防止折叠时内容溢出 */
-.collapse-inner {
-  overflow: hidden;
-}
-
-/* 4. 小箭头旋转动画：平滑翻转 180 度指向上方 */
-.collapse-arrow {
-  transition: transform 0.25s ease;
-}
-.collapse-item.expanded .collapse-arrow {
-  transform: rotate(180deg);
-}
-
-/* ============================================================
-   全局动态主题 CSS 类 (代替又臭又长的 Tailwind 写死颜色)
-   ============================================================ */
-
-/* 1. 实体按钮与徽章 (如：已应用) */
-.theme-btn-solid {
-  background-color: rgb(var(--primary-rgb)) !important;
-  color: white !important;
-}
+/* 解决按钮 hover 仍是蓝色的问题，强制利用滤镜提亮，禁止被 Tailwind 污染 */
 .theme-btn-solid:hover:not(:disabled) {
-  filter: brightness(1.1);
-  box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.25);
+  filter: brightness(1.15) !important;
+  box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3) !important;
 }
 
-/* 2. 柔和按钮 (如：下载、检查更新、未应用) */
-.theme-btn-soft {
-  background-color: rgba(var(--primary-rgb), 0.1) !important;
-  color: rgb(var(--primary-rgb)) !important;
+/* 柔和填充 (如：下载按钮、检查更新、无边框徽章) */
+.theme-btn-soft, .theme-bg-soft { 
+  background-color: rgba(var(--primary-rgb), 0.1) !important; 
+  color: rgb(var(--primary-rgb)) !important; 
+  border: none !important; 
 }
 .theme-btn-soft:hover:not(:disabled) {
   background-color: rgba(var(--primary-rgb), 0.15) !important;
 }
 
-/* 3. SVG 图标与高亮文字 */
-.theme-text {
-  color: rgb(var(--primary-rgb)) !important;
-}
-
-/* 4. 更新日志的高级磨砂背景 (彻底解决暗黑模式发脏问题) */
+/* 更新日志磨砂背景 */
 .theme-bg-subtle {
   background-color: rgba(var(--primary-rgb), 0.04) !important;
   border: 1px solid rgba(var(--primary-rgb), 0.1) !important;
@@ -582,3 +254,130 @@ html.dark .theme-bg-subtle {
   background-color: rgba(var(--primary-rgb), 0.08) !important;
   border: 1px solid rgba(var(--primary-rgb), 0.15) !important;
 }
+
+/* 输入框焦点光环与Hover */
+.theme-ring:focus { 
+  --tw-ring-color: rgba(var(--primary-rgb), 0.5) !important; 
+  border-color: rgb(var(--primary-rgb)) !important; 
+  box-shadow: 0 0 0 1px rgb(var(--primary-rgb)) !important;
+}
+.hover-theme:hover {
+  color: rgb(var(--primary-rgb)) !important;
+  border-color: rgb(var(--primary-rgb)) !important;
+}
+
+/* --- B. 强制接管各组件的旧版写死颜色 --- */
+
+/* 1. 侧边栏交互 */
+.nav-item.active { background-color: rgba(var(--primary-rgb), 0.1) !important; color: rgb(var(--primary-rgb)) !important; }
+.nav-item.active svg { color: rgb(var(--primary-rgb)) !important; }
+
+/* 2. 品牌、机型、版本等卡片的 1.5px 选中状态与边框 */
+.brand-card.active,
+.select-card.selected,
+.version-card.selected,
+html[data-theme-mode="light"] .mode-btn-light,
+html[data-theme-mode="dark"] .mode-btn-dark,
+html[data-theme-mode="system"] .mode-btn-system {
+  border-color: rgb(var(--primary-rgb)) !important;
+  background-color: rgba(var(--primary-rgb), 0.03) !important;
+  box-shadow: none !important;
+}
+html.dark .brand-card.active,
+html.dark .select-card.selected,
+html.dark .version-card.selected,
+html.dark[data-theme-mode="light"] .mode-btn-light,
+html.dark[data-theme-mode="dark"] .mode-btn-dark,
+html.dark[data-theme-mode="system"] .mode-btn-system {
+  border-color: rgb(var(--primary-rgb)) !important;
+  background-color: rgba(var(--primary-rgb), 0.15) !important;
+}
+
+/* 3. 强制选中卡片内的文字跟随主题色高亮 (已移除刺眼的 brightness 滤镜) */
+.brand-card.active .font-medium,
+.brand-card.active .text-xs,
+.select-card.selected .text-sm,
+.select-card.selected .brand-prefix,
+.version-card.selected .font-semibold,
+html[data-theme-mode="light"] .mode-text-light,
+html[data-theme-mode="dark"] .mode-text-dark,
+html[data-theme-mode="system"] .mode-text-system {
+  color: rgb(var(--primary-rgb)) !important;
+}
+html.dark .brand-card.active div,
+html.dark .brand-card.active span,
+html.dark .select-card.selected div,
+html.dark .select-card.selected span,
+html.dark .version-card.selected .font-semibold,
+html.dark[data-theme-mode="light"] .mode-text-light,
+html.dark[data-theme-mode="dark"] .mode-text-dark,
+html.dark[data-theme-mode="system"] .mode-text-system {
+  color: rgb(var(--primary-rgb)) !important;
+}
+
+/* 4. 引导页列表项选中状态 (macOS 风格列表) */
+.model-list-item.selected {
+  background-color: rgb(var(--primary-rgb)) !important;
+  border-color: rgb(var(--primary-rgb)) !important;
+  color: white !important;
+  font-weight: 500;
+}
+
+/* 5. 引导页向导步骤 (顶部的 1, 2, 3 进度圈和文字) */
+.step-item.active .step-number,
+.step-item.completed .step-number,
+html.dark .step-item.active .step-number,
+html.dark .step-item.completed .step-number {
+  background-color: rgb(var(--primary-rgb)) !important;
+  border-color: rgb(var(--primary-rgb)) !important;
+  color: white !important;
+}
+.step-item.active .step-text,
+.step-item.completed .step-text,
+html.dark .step-item.active .step-text,
+html.dark .step-item.completed .step-text {
+  color: rgb(var(--primary-rgb)) !important;
+}
+
+/* 6. 校准页面网格 Hover 效果 */
+#zGrid div:hover, #xyGrid div:hover {
+  border-color: rgb(var(--primary-rgb)) !important;
+  background-color: rgba(var(--primary-rgb), 0.05) !important;
+}
+
+/* 7. 预留：强制接管设置里的 Toggle 开关 */
+input[type="checkbox"]:checked + div {
+  background-color: rgb(var(--primary-rgb)) !important;
+  border-color: rgb(var(--primary-rgb)) !important;
+}
+
+/* ============================================================
+   🔥 Tailwind 风格动态色阶系统 (50 - 950)
+   利用 color-mix 与白色/黑色混合，生成极其平滑的动态色卡
+   ============================================================ */
+
+/* ---------- 字体颜色阶梯 ---------- */
+.theme-text-50  { color: color-mix(in srgb, rgb(var(--primary-rgb)) 10%, white) !important; }
+.theme-text-100 { color: color-mix(in srgb, rgb(var(--primary-rgb)) 20%, white) !important; }
+.theme-text-200 { color: color-mix(in srgb, rgb(var(--primary-rgb)) 40%, white) !important; }
+.theme-text-300 { color: color-mix(in srgb, rgb(var(--primary-rgb)) 60%, white) !important; }
+.theme-text-400 { color: color-mix(in srgb, rgb(var(--primary-rgb)) 80%, white) !important; }
+.theme-text-500, .theme-text { color: rgb(var(--primary-rgb)) !important; } /* 标准基准色 */
+.theme-text-600 { color: color-mix(in srgb, rgb(var(--primary-rgb)) 85%, black) !important; }
+.theme-text-700 { color: color-mix(in srgb, rgb(var(--primary-rgb)) 70%, black) !important; }
+.theme-text-800 { color: color-mix(in srgb, rgb(var(--primary-rgb)) 50%, black) !important; }
+.theme-text-900 { color: color-mix(in srgb, rgb(var(--primary-rgb)) 30%, black) !important; }
+.theme-text-950 { color: color-mix(in srgb, rgb(var(--primary-rgb)) 15%, black) !important; }
+
+/* ---------- 背景颜色阶梯 ---------- */
+.theme-bg-50  { background-color: color-mix(in srgb, rgb(var(--primary-rgb)) 10%, white) !important; }
+.theme-bg-100 { background-color: color-mix(in srgb, rgb(var(--primary-rgb)) 20%, white) !important; }
+.theme-bg-200 { background-color: color-mix(in srgb, rgb(var(--primary-rgb)) 40%, white) !important; }
+.theme-bg-300 { background-color: color-mix(in srgb, rgb(var(--primary-rgb)) 60%, white) !important; }
+.theme-bg-400 { background-color: color-mix(in srgb, rgb(var(--primary-rgb)) 80%, white) !important; }
+.theme-bg-500, .theme-bg { background-color: rgb(var(--primary-rgb)) !important; } /* 标准基准色 */
+.theme-bg-600 { background-color: color-mix(in srgb, rgb(var(--primary-rgb)) 85%, black) !important; }
+.theme-bg-700 { background-color: color-mix(in srgb, rgb(var(--primary-rgb)) 70%, black) !important; }
+.theme-bg-800 { background-color: color-mix(in srgb, rgb(var(--primary-rgb)) 50%, black) !important; }
+.theme-bg-900 { background-color: color-mix(in srgb, rgb(var(--primary-rgb)) 30%, black) !important; }
+.theme-bg-950 { background-color: color-mix(in srgb, rgb(var(--primary-rgb)) 15%, black) !important; }
