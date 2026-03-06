@@ -1,22 +1,38 @@
-// 主题与暗黑模式管理
-
 // ==================== 外观主题三态控制系统 (带圆形扩散动画) ====================
 let currentThemeMode = document.documentElement.getAttribute('data-theme-mode') || 'light';
 
-// 初始化主题
+// 🚀 新增：全局主色调引擎 (支持未来无限扩展)
+const THEME_PALETTE = {
+  blue: { name: '蔚蓝', rgb: '59, 130, 246' },      // Tailwind Blue 500
+  emerald: { name: '翠绿', rgb: '16, 185, 129' },   // Tailwind Emerald 500
+  violet: { name: '紫罗兰', rgb: '139, 92, 246' },  // Tailwind Violet 500
+  orange: { name: '橙黄', rgb: '245, 158, 11' },    // Tailwind Amber 500
+  rose: { name: '玫瑰', rgb: '244, 63, 94' }        // Tailwind Rose 500
+};
+
+// 初始化主题与颜色
 function initTheme() {
   const savedMode = localStorage.getItem('themeMode') || 'light';
+  const savedColor = localStorage.getItem('appThemeColor') || 'blue'; // 默认蔚蓝
+  
   setThemeMode(savedMode, null);
+  setGlobalThemeColor(savedColor);
+}
+
+// 🚀 新增：切换全局主色调
+function setGlobalThemeColor(colorKey) {
+  const color = THEME_PALETTE[colorKey] || THEME_PALETTE.blue;
+  // 将 RGB 值注入到 HTML 根节点，供 CSS 全局调用
+  document.documentElement.style.setProperty('--primary-rgb', color.rgb);
+  localStorage.setItem('appThemeColor', colorKey);
 }
 
 // 1. 卡片点击分发器
 function setThemeMode(mode, event) {
-  if (currentThemeMode === mode) return; // 如果已经是该模式，不触发动画
+  if (currentThemeMode === mode) return; 
   
   currentThemeMode = mode;
-  // 保存主题设置
   localStorage.setItem('themeMode', mode);
-  // 判断最终是要渲染暗色还是亮色
   const isDark = mode === 'dark' || (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
   
   executeThemeTransition(mode, isDark, event);
@@ -32,12 +48,10 @@ function toggleDarkMode(event) {
 function executeThemeTransition(mode, isDark, event) {
   const html = document.documentElement;
 
-  // 将所有的 DOM 修改打包在一起
   const applyDOMChanges = () => {
     html.setAttribute('data-theme-mode', mode);
     html.classList.toggle('dark', isDark);
 
-    // 顺手切换侧边栏的太阳/月亮图标
     const icon = document.querySelector('.dark-icon-sun path');
     if (icon) {
       if (isDark) {
@@ -47,66 +61,50 @@ function executeThemeTransition(mode, isDark, event) {
       }
     }
 
-    // 通知 Electron 主进程同步修改原生窗口标题栏
     if (window.mkpAPI && window.mkpAPI.setNativeTheme) {
           window.mkpAPI.setNativeTheme(mode);
         }
   };
 
-  // 如果浏览器/Electron版本过低不支持该 API，直接切换无动画
   if (!document.startViewTransition) {
     applyDOMChanges();
     return;
   }
 
-  // 智能获取扩散圆心坐标：优先使用鼠标点击位置，如果没拿到 event，则从屏幕正中心扩散
   const x = (event && event.clientX !== undefined) ? event.clientX : window.innerWidth / 2;
   const y = (event && event.clientY !== undefined) ? event.clientY : window.innerHeight / 2;
-  
-  // 计算圆心到屏幕最远角落的距离，作为圆的最终半径
   const endRadius = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
 
-  // 启动视图过渡 API
   const transition = document.startViewTransition(() => {
     applyDOMChanges();
   });
 
-  // 注入我们自定义的 CSS 动画参数
   transition.ready.then(() => {
     document.documentElement.animate(
       { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${endRadius}px at ${x}px ${y}px)`] },
-      {
-        duration: 400, // 动画持续时间 400ms，你可以自己微调
-        easing: "ease-out",
-        pseudoElement: "::view-transition-new(root)"
-      }
+      { duration: 400, easing: "ease-out", pseudoElement: "::view-transition-new(root)" }
     );
   });
 }
 
-// 4. 监听操作系统级别的夜间模式自动切换
 function initSystemThemeListener() {
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
     if (currentThemeMode === 'system') {
-      // 系统自动切换时没鼠标坐标，传 null，从屏幕中心扩散
       executeThemeTransition('system', e.matches, null);
     }
   });
 }
 
-// 设置版本主题色
 function setVersionTheme(version, textHex, bgHex) {
   const root = document.documentElement;
   root.style.setProperty(`--theme-${version}-text`, textHex);
   root.style.setProperty(`--theme-${version}-bg`, bgHex);
   
-  // 如果当前选中的版本就是修改的版本，更新侧边栏徽章
-  if (window.selectedVersion === version) {
+  if (window.selectedVersion === version && typeof updateSidebarVersionBadge === 'function') {
     updateSidebarVersionBadge(version);
   }
 }
 
-// 导出函数
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { initTheme, setThemeMode, toggleDarkMode, setVersionTheme, initSystemThemeListener };
+  module.exports = { initTheme, setThemeMode, toggleDarkMode, setVersionTheme, initSystemThemeListener, setGlobalThemeColor };
 }

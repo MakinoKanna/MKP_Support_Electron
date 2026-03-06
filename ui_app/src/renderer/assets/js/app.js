@@ -798,16 +798,15 @@ function renderListItems(container, releases, printerData, versionType, isLocal)
     item.className = 'collapse-item transition-all border-b border-gray-100 dark:border-[#333] last:border-b-0 bg-white dark:bg-gray-800';
     
     let btnText = '下载';
-    let btnClass = 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 dark:bg-[#333] dark:border-[#444] dark:text-gray-200 dark:hover:bg-[#444]';
+    let btnClass = 'theme-btn-soft cursor-pointer transition-all duration-200 active:scale-95 flex items-center justify-center min-w-[76px] rounded-lg px-4 py-1.5 text-xs font-medium';
     
     if (isLocal) {
       if (isApplied) {
         btnText = '已应用';
-        // 【核心修复 1】：移除 pointer-events-none，改为 cursor-pointer，并加入 hover 和按下缩放特效
-        btnClass = 'bg-blue-500 text-white cursor-pointer hover:bg-blue-600 shadow-sm transition-all duration-200 active:scale-95 flex items-center justify-center min-w-[76px]';
+        btnClass = 'theme-btn-solid cursor-pointer transition-all duration-200 active:scale-95 flex items-center justify-center min-w-[76px] rounded-lg px-4 py-1.5 text-xs font-medium shadow-sm';
       } else {
         btnText = '应用';
-        btnClass = 'bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:bg-blue-500/20 cursor-pointer transition-all duration-200 active:scale-95 flex items-center justify-center min-w-[76px]';
+        btnClass = 'theme-btn-soft cursor-pointer transition-all duration-200 active:scale-95 flex items-center justify-center min-w-[76px] rounded-lg px-4 py-1.5 text-xs font-medium';
       }
     }
 
@@ -816,7 +815,7 @@ function renderListItems(container, releases, printerData, versionType, isLocal)
         <div class="flex items-center gap-3">
           <span class="text-sm font-bold text-gray-900 dark:text-gray-100">${presetNamePrefix} ${release.id}</span>
           ${release.isLatest ? '<span class="px-2 py-0.5 rounded text-[10px] font-medium bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-400">最新</span>' : ''}
-          ${isApplied ? '<span class="px-2 py-0.5 rounded text-[10px] font-medium bg-blue-500 text-white flex items-center gap-1 shadow-sm"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>当前使用</span>' : ''}
+          ${isApplied ? `<span class="badge-solid-primary px-2 py-0.5 rounded text-[10px] font-medium flex items-center gap-1 shadow-sm"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>当前使用</span>` : ''}
           <span class="text-xs text-gray-400 ml-2 hidden sm:inline">发布于 ${release.date}</span>
         </div>
         
@@ -832,16 +831,16 @@ function renderListItems(container, releases, printerData, versionType, isLocal)
             </button>
             ` : ''}
           </div>
-          <svg class="w-5 h-5 text-gray-400 collapse-arrow transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-        </div>
+              <svg class="w-5 h-5 text-gray-400 collapse-arrow transition-transform duration-200 group-hover:theme-text" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </div>
       </div>
       <div class="collapse-wrapper">
         <div class="collapse-inner">
           <div class="px-5 pb-4 pt-1">
-            <div class="bg-gray-50/50 dark:bg-[#1E1E1E]/50 rounded-xl p-4 border border-gray-100 dark:border-[#333]">
-              <div class="flex justify-between items-center mb-2">
+          <div class="rounded-xl p-4 theme-bg-subtle">
+            <div class="flex justify-between items-center mb-2">
                  <div class="text-xs font-medium text-gray-700 dark:text-gray-300">更新日志：</div>
-                 <div class="text-[10px] text-gray-400 font-mono bg-gray-200 dark:bg-[#333] px-2 py-0.5 rounded">文件: ${release.fileName}</div>
+                 <div class="text-[10px] font-mono px-2 py-0.5 rounded bg-black/5 dark:bg-black/20 text-gray-500 dark:text-gray-400">文件: ${release.fileName}</div>
               </div>
               <ul class="space-y-1.5 text-xs text-gray-600 dark:text-gray-400">
                 ${release.changes.map(c => `<li class="flex items-start gap-1.5"><span class="text-gray-300 dark:text-gray-600 mt-0.5">•</span> ${c}</li>`).join('')}
@@ -1119,14 +1118,13 @@ function handleApplyLocal(releaseId, fileName, printerData, clickedBtn = null) {
           btn.innerHTML = `<svg class="w-3.5 h-3.5 mr-1 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>刷新`;
           
           setTimeout(() => {
-            btn.innerHTML = `<svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>重新应用`;
-            btn.classList.replace('bg-blue-500', 'bg-green-500');
-            btn.classList.remove('hover:bg-blue-600');
+            btn.innerHTML = `<svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>已更新`;
+            // 去掉原来的 bg-green-500，强行赋内联样式或者加一个新类（为了省事，这里直接改 text）
+            btn.style.backgroundColor = '#10B981'; // 临时变绿
             
             setTimeout(() => {
               btn.innerHTML = '已应用';
-              btn.classList.replace('bg-green-500', 'bg-blue-500');
-              btn.classList.add('hover:bg-blue-600');
+              btn.style.backgroundColor = ''; // 恢复主题色
             }, 1200);
           }, 500);
         } else {
@@ -1139,7 +1137,7 @@ function handleApplyLocal(releaseId, fileName, printerData, clickedBtn = null) {
       if (badgeContainer) {
         const hasBadge = Array.from(badgeContainer.children).some(el => el.textContent.includes('当前使用'));
         if (!hasBadge) {
-          const badgeHtml = `<span class="applied-badge px-2 py-0.5 rounded text-[10px] font-medium bg-blue-500 text-white flex items-center gap-1 shadow-sm animate-scale-in"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>当前使用</span>`;
+          const badgeHtml = `<span class="applied-badge px-2 py-0.5 rounded text-[10px] font-medium flex items-center gap-1 shadow-sm animate-scale-in theme-btn-solid"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>当前使用</span>`;
           badgeContainer.insertAdjacentHTML('beforeend', badgeHtml);
         }
       }
@@ -1147,7 +1145,7 @@ function handleApplyLocal(releaseId, fileName, printerData, clickedBtn = null) {
       // 剥夺其他卡片的“已应用”状态
       if (btn) {
         btn.innerHTML = '应用';
-        btn.className = 'dl-btn px-4 py-1.5 rounded-lg text-xs font-medium transition-all bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:bg-blue-500/20 cursor-pointer active:scale-95 flex items-center justify-center min-w-[76px]';
+        btn.className = 'theme-btn-soft cursor-pointer transition-all duration-200 active:scale-95 flex items-center justify-center min-w-[76px] rounded-lg px-4 py-1.5 text-xs font-medium';
       }
       if (badgeContainer) {
         const badges = Array.from(badgeContainer.children);

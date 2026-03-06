@@ -1,5 +1,10 @@
 /* ==================== 1. CSS变量定义 ==================== */
 :root {
+  /* 🚀 核心：由 theme.js 动态接管的主色调 RGB */
+  --primary-rgb: 59, 130, 246; 
+  /* 将原来的写死颜色，全部代理到我们动态的 RGB 变量上 */
+  --accent-blue: rgb(var(--primary-rgb));       
+  --accent-blue-light: rgba(var(--primary-rgb), 0.1);
   --bg-page: #F5F6F8;           
   --bg-card: #FFFFFF;           
   --bg-input: #F9FAFB;          
@@ -540,3 +545,40 @@ html.dark .step-item.completed .step-text {
   transform: rotate(180deg);
 }
 
+/* ============================================================
+   全局动态主题 CSS 类 (代替又臭又长的 Tailwind 写死颜色)
+   ============================================================ */
+
+/* 1. 实体按钮与徽章 (如：已应用) */
+.theme-btn-solid {
+  background-color: rgb(var(--primary-rgb)) !important;
+  color: white !important;
+}
+.theme-btn-solid:hover:not(:disabled) {
+  filter: brightness(1.1);
+  box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.25);
+}
+
+/* 2. 柔和按钮 (如：下载、检查更新、未应用) */
+.theme-btn-soft {
+  background-color: rgba(var(--primary-rgb), 0.1) !important;
+  color: rgb(var(--primary-rgb)) !important;
+}
+.theme-btn-soft:hover:not(:disabled) {
+  background-color: rgba(var(--primary-rgb), 0.15) !important;
+}
+
+/* 3. SVG 图标与高亮文字 */
+.theme-text {
+  color: rgb(var(--primary-rgb)) !important;
+}
+
+/* 4. 更新日志的高级磨砂背景 (彻底解决暗黑模式发脏问题) */
+.theme-bg-subtle {
+  background-color: rgba(var(--primary-rgb), 0.04) !important;
+  border: 1px solid rgba(var(--primary-rgb), 0.1) !important;
+}
+html.dark .theme-bg-subtle {
+  background-color: rgba(var(--primary-rgb), 0.08) !important;
+  border: 1px solid rgba(var(--primary-rgb), 0.15) !important;
+}
