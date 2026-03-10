@@ -25,6 +25,13 @@
     "directories": {
       "output": "dist"
     },
+    "extraResources": [
+      {
+        "from": "cloud_data",
+        "to": "cloud_data",
+        "filter": ["**/*"]
+      }
+    ],
     "publish": [
       {
         "provider": "github",
@@ -38,13 +45,14 @@
       ]
     },
     "nsis": {
-      "oneClick": true,
+      "oneClick": false,
       "perMachine": false,
       "allowElevation": true,
-      "allowToChangeInstallationDirectory": false,
+      "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "MKP Support"
+      "shortcutName": "MKP Support",
+      "license": "license.txt"
     }
   }
 }

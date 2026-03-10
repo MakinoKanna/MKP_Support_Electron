@@ -6,6 +6,7 @@ const { processGcode } = require('./mkp_engine');
 const { exec } = require('child_process');
 const isCliMode = process.argv.includes('--Gcode');
 
+
 // ==========================================
 // 日志系统 (按天轮转 + 自动清理)
 // ==========================================
@@ -104,40 +105,57 @@ function compareVersions(v1, v2) {
   return 0; 
 }
 
-// 初始化：释放默认预设 JSON 到用户电脑
+// ==========================================
+// 🚀 初始化：释放出厂预设数据 (适配最新扁平架构 + 完善日志)
+// ==========================================
 ipcMain.handle('init-default-presets', async () => {
   try {
     const userDataPath = path.join(app.getPath('userData'), 'Presets');
+    
+    // 1. 确保用户目录存在
     if (!fs.existsSync(userDataPath)) {
       fs.mkdirSync(userDataPath, { recursive: true });
+      console.log("[系统初始化] 📁 创建用户数据目录:", userDataPath);
     }
 
-    const defaultPresetsPath = path.join(__dirname, '../default_presets');
-    if (!fs.existsSync(defaultPresetsPath)) return { success: true, msg: "无内置预设" };
+    // 2. 自动判断环境，精准定位云端数据文件夹
+    // 打包后：去 resources 里找 | 开发中：从 src/main 往上跳两级到根目录
+    const bundledPresetsPath = app.isPackaged 
+      ? path.join(process.resourcesPath, 'cloud_data', 'presets') 
+      : path.join(__dirname, '../../cloud_data/presets');
 
-    const files = fs.readdirSync(defaultPresetsPath);
+    if (!fs.existsSync(bundledPresetsPath)) {
+      console.warn(`[系统初始化] ⚠️ 未找到内置预设目录: ${bundledPresetsPath}`);
+      return { success: true, msg: "无内置预设" };
+    }
+
+    console.log(`[系统初始化] ⏳ 正在从 ${bundledPresetsPath} 释放预设...`);
+    let copiedCount = 0;
+
+    // 3. 遍历并释放文件
+    const files = fs.readdirSync(bundledPresetsPath);
     for (const file of files) {
       if (file.endsWith('.json')) {
-        const sourceFile = path.join(defaultPresetsPath, file);
+        const sourceFile = path.join(bundledPresetsPath, file);
         const targetFile = path.join(userDataPath, file);
 
+        // 💡 核心优化：因为新版文件名自带版本号(如 v3.0.0-r1)，只要文件不存在直接复制即可
         if (!fs.existsSync(targetFile)) {
           fs.copyFileSync(sourceFile, targetFile);
+          console.log(`[系统初始化] ✅ 成功释放新预设: ${file}`);
+          copiedCount++;
         } else {
-          try {
-            const sourceData = JSON.parse(fs.readFileSync(sourceFile, 'utf8'));
-            const targetData = JSON.parse(fs.readFileSync(targetFile, 'utf8'));
-            if (compareVersions(sourceData.version, targetData.version) > 0) {
-              fs.copyFileSync(sourceFile, targetFile);
-            }
-          } catch (e) {
-            console.error("解析JSON报错", e);
-          }
+          // 如果同名文件已存在，说明用户已经有了这个版本的预设，无需覆盖
+          console.log(`[系统初始化] ⚡ 预设已存在，跳过: ${file}`);
         }
       }
     }
-    return { success: true };
+    
+    console.log(`[系统初始化] 🎉 预设释放完成！本次共新增 ${copiedCount} 个文件。`);
+    return { success: true, copiedCount };
+
   } catch (error) {
+    console.error("[系统初始化] ❌ 释放预设时发生严重错误:", error);
     return { success: false, error: error.message };
   }
 });
