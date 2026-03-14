@@ -37,8 +37,17 @@ contextBridge.exposeInMainWorld('mkpAPI', {
   getShortPath: (absolutePath) => ipcRenderer.invoke('get-short-path', absolutePath),
   renamePresetDisplay: (payload) => ipcRenderer.invoke('rename-preset-display', payload),
   showItemInFolder: (fileName) => ipcRenderer.invoke('show-item-in-folder', fileName),
+  readHomeCatalog: () => ipcRenderer.invoke('read-home-catalog'),
+  saveHomeCatalog: (payload) => ipcRenderer.invoke('save-home-catalog', payload),
+  resetHomeCatalog: () => ipcRenderer.invoke('reset-home-catalog'),
+  importHomeCatalogImage: (payload) => ipcRenderer.invoke('import-home-catalog-image', payload),
   readReleaseInfo: () => ipcRenderer.invoke('read-release-info'),
   saveReleaseInfo: (payload) => ipcRenderer.invoke('save-release-info', payload),
+  readReleaseConfig: () => ipcRenderer.invoke('read-release-config'),
+  saveReleaseConfigCatalog: (payload) => ipcRenderer.invoke('save-release-config-catalog', payload),
+  importReleaseConfigImage: (payload) => ipcRenderer.invoke('import-release-config-image', payload),
+  readReleaseConfigPreset: (fileName) => ipcRenderer.invoke('read-release-config-preset', fileName),
+  saveReleaseConfigPreset: (payload) => ipcRenderer.invoke('save-release-config-preset', payload),
   runReleaseBuild: (mode) => ipcRenderer.invoke('run-release-build', mode),
   openReleasePath: (target) => ipcRenderer.invoke('open-release-path', target)
   

@@ -19,6 +19,7 @@ let cachedOnlineReleases = null;
 let currentZOffset = 0; 
 let currentXOffset = 0;
 let currentYOffset = 0;
+let calibrationContextKey = '';
 
 let APP_REAL_VERSION = '0.0.0';
 const ACTIVE_PRESET_UPDATED_EVENT = 'mkp:active-preset-updated';
@@ -1750,6 +1751,38 @@ function clearCalibrationSelections() {
 
   const zBadge = document.getElementById('zBadge');
   if (zBadge) zBadge.classList.add('hidden');
+  const xyBadgeX = document.getElementById('xyBadgeX');
+  const xyBadgeY = document.getElementById('xyBadgeY');
+  if (xyBadgeX) xyBadgeX.classList.add('hidden');
+  if (xyBadgeY) xyBadgeY.classList.add('hidden');
+}
+
+function setCalibrationCurrentSummaryVisible(visible) {
+  const zSummary = document.getElementById('zCurrentOffsetSummary');
+  const xySummary = document.getElementById('xyCurrentOffsetSummary');
+  if (zSummary) zSummary.classList.toggle('hidden', !visible);
+  if (xySummary) xySummary.classList.toggle('hidden', !visible);
+}
+
+function resetCalibrationPanels(options = {}) {
+  clearCalibrationSelections();
+
+  const showSummary = options.showSummary === true;
+
+  [
+    ['zProgress', true],
+    ['xyProgress', true],
+    ['zPlaceholder', false],
+    ['xyPlaceholder', false],
+    ['zGridSelector', true],
+    ['xyGridSelector', true]
+  ].forEach(([id, hidden]) => {
+    const element = document.getElementById(id);
+    if (!element) return;
+    element.classList.toggle('hidden', hidden);
+  });
+
+  setCalibrationCurrentSummaryVisible(showSummary);
 }
 
 function applyCalibrationOffsetSnapshot(offsets = {}, options = {}) {
@@ -1758,6 +1791,7 @@ function applyCalibrationOffsetSnapshot(offsets = {}, options = {}) {
     y: Number.isFinite(Number(offsets.y)) ? Number(offsets.y) : 0,
     z: Number.isFinite(Number(offsets.z)) ? Number(offsets.z) : 0
   };
+  const hasActivePreset = options.hasActivePreset !== false;
 
   window.currentXOffset = nextOffsets.x;
   window.currentYOffset = nextOffsets.y;
@@ -1768,15 +1802,19 @@ function applyCalibrationOffsetSnapshot(offsets = {}, options = {}) {
   }
 
   [
+    ['currentXOffsetDisplay', nextOffsets.x],
+    ['currentYOffsetDisplay', nextOffsets.y],
     ['zOriginal', nextOffsets.z],
     ['zNewValue', nextOffsets.z],
     ['currentZOffsetDisplay', nextOffsets.z]
   ].forEach(([id, value]) => {
     const element = document.getElementById(id);
     if (element) {
-      element.textContent = Number(value).toFixed(2);
+      element.textContent = hasActivePreset ? Number(value).toFixed(2) : '--';
     }
   });
+
+  setCalibrationCurrentSummaryVisible(hasActivePreset);
 
   if (typeof updateZGridSelection === 'function') {
     updateZGridSelection();
@@ -1796,8 +1834,12 @@ async function refreshCalibrationOffsets(options = {}) {
   const preset = typeof loadActivePreset === 'function'
     ? await loadActivePreset(options.forceRefresh === true)
     : null;
-  const offsets = preset?.data ? extractOffsetValues(preset.data) : { x: 0, y: 0, z: 0 };
-  applyCalibrationOffsetSnapshot(offsets, { keepSelections: options.keepSelections === true });
+  const hasActivePreset = !!preset?.data;
+  const offsets = hasActivePreset ? extractOffsetValues(preset.data) : { x: 0, y: 0, z: 0 };
+  applyCalibrationOffsetSnapshot(offsets, {
+    keepSelections: options.keepSelections === true,
+    hasActivePreset
+  });
   return offsets;
 }
 
@@ -1828,6 +1870,9 @@ function applyCalibrationButtonState(button, enabled) {
 async function refreshCalibrationAvailability() {
   const availability = await getCalibrationAvailability();
   const enabled = availability.ready;
+  const nextContextKey = `${selectedPrinter || ''}|${selectedVersion || ''}|${availability.presetPath || ''}`;
+  const shouldResetPanels = calibrationContextKey !== nextContextKey;
+  calibrationContextKey = nextContextKey;
 
   [
     document.getElementById('zDirectEditBtn'),
@@ -1844,6 +1889,12 @@ async function refreshCalibrationAvailability() {
   document.querySelectorAll('button[onclick^="saveZOffset"], button[onclick^="saveXYOffset"]').forEach((button) => {
     applyCalibrationButtonState(button, enabled);
   });
+
+  if (shouldResetPanels) {
+    resetCalibrationPanels({ showSummary: enabled });
+  } else if (!enabled) {
+    setCalibrationCurrentSummaryVisible(false);
+  }
 
   return availability;
 }
@@ -2353,6 +2404,9 @@ async function switchPage(page) {
     if (typeof refreshCalibrationAvailability === 'function') {
       await refreshCalibrationAvailability();
     }
+    if (typeof refreshCalibrationOffsets === 'function') {
+      await refreshCalibrationOffsets({ forceRefresh: false, keepSelections: false });
+    }
   }
 }
 
@@ -2616,6 +2670,10 @@ async function init() {
   }
   
   loadUserConfig(); 
+
+  if (typeof window.ensureHomeCatalogReady === 'function') {
+    await window.ensureHomeCatalogReady();
+  }
   
   renderBrands();
   if (selectedPrinter) {

@@ -176,36 +176,52 @@
         </div>
 
         <div class="page-content hide-scrollbar">
-          <div class="max-w-6xl w-full">
-            <div class="grid grid-cols-12 gap-6 items-start">
-              <div class="col-span-3">
-                <div class="bg-white dark:bg-[#252526] rounded-xl card-shadow p-4 flex flex-col max-h-[calc(100vh-160px)] border border-transparent dark:border-[#333] transition-colors">
-                  <div class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-4 shrink-0">品牌列表</div>
-                  <div id="brandList" class="space-y-2 flex-1 overflow-y-auto hide-scrollbar"></div>
+          <div class="max-w-7xl w-full home-stage">
+            <div class="home-stage-panel bg-white dark:bg-[#252526] rounded-[30px] card-shadow border border-transparent dark:border-[#333] transition-colors">
+              <div class="home-stage-toolbar">
+                <div class="min-w-0">
+                  <div class="text-[11px] font-semibold uppercase tracking-[0.22em] text-gray-400 dark:text-gray-500">Printer Gallery</div>
+                  <div id="currentBrandTitle" class="mt-2 text-2xl font-semibold text-gray-900 dark:text-gray-100 truncate">Bambu Lab · 4 个机型</div>
                 </div>
-              </div>
-              <div class="col-span-9">
-                <div class="bg-white dark:bg-[#252526] rounded-xl card-shadow p-4 flex flex-col max-h-[calc(100vh-160px)] border border-transparent dark:border-[#333] transition-colors">
-                  <div class="flex items-center justify-between mb-4 w-full shrink-0">
-                    <div class="flex items-center gap-2 truncate pr-4 shrink">
-                      <span id="currentBrandTitle" class="text-sm font-medium text-gray-700 dark:text-gray-200 truncate">默认 - Bambu品牌</span>
-                    </div>
-                    <div class="flex items-center gap-3 flex-1 justify-end min-w-0">
-                      <div class="relative flex-1 max-w-[200px] min-w-[120px]">
-                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
-                        </svg>
-                        <input type="text" id="printerSearch" placeholder="搜索机型..." class="input-field pl-9 pr-4 py-2 rounded-lg text-sm w-full" oninput="filterPrinters()">
-                      </div>
-                    </div>
+                <div class="home-stage-toolbar-actions">
+                  <div class="inline-flex rounded-2xl border border-gray-200 dark:border-[#333] bg-gray-50 dark:bg-[#1E1E1E] p-1 shrink-0">
+                    <button id="homeViewCompactBtn" type="button" class="release-segment-btn active rounded-xl px-4 py-2 text-sm font-medium transition-all">简约</button>
+                    <button id="homeViewDetailedBtn" type="button" class="release-segment-btn rounded-xl px-4 py-2 text-sm font-medium transition-all">详细</button>
                   </div>
-                  <div class="flex-1 min-h-0 overflow-y-auto hide-scrollbar">
-                    <div id="printerGrid" class="grid grid-cols-3 gap-4 pb-2"></div>
+                  <div class="relative home-stage-search">
+                    <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
+                    </svg>
+                    <input type="text" id="printerSearch" placeholder="搜索机型..." class="input-field pl-10 pr-4 py-3 rounded-2xl text-sm w-full" oninput="filterPrinters()">
                   </div>
                 </div>
               </div>
-            </div> 
-          </div> 
+
+              <div class="home-brand-strip-block">
+                <div class="home-brand-strip-head">
+                  <span class="text-sm font-medium text-gray-500 dark:text-gray-400">品牌</span>
+                </div>
+                <div id="brandList" class="home-brand-strip hide-scrollbar"></div>
+              </div>
+
+              <div class="home-gallery-shell">
+                <div class="home-gallery-head">
+                  <div class="text-sm text-gray-500 dark:text-gray-400">右键品牌或机型可继续管理，当前视图支持横向浏览</div>
+                  <div class="home-gallery-actions">
+                    <button id="homeGalleryPrevBtn" type="button" class="home-gallery-nav" aria-label="上一张">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                    </button>
+                    <button id="homeGalleryNextBtn" type="button" class="home-gallery-nav" aria-label="下一张">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </button>
+                  </div>
+                </div>
+                <div id="homeGalleryViewport" class="home-gallery-viewport hide-scrollbar">
+                  <div id="printerGrid" class="home-printer-grid"></div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -383,7 +399,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/>
                   </svg>
                   
-                  <div class="text-2xl font-black theme-text mb-3 tracking-tight">
+                  <div id="zCurrentOffsetSummary" class="hidden text-2xl font-black theme-text mb-3 tracking-tight">
                     当前预设的Z偏移值为：<span id="currentZOffsetDisplay">--</span>
                   </div>
 
@@ -442,6 +458,9 @@
                   <svg class="w-10 h-10 text-gray-400 dark:text-gray-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/>
                   </svg>
+                  <div id="xyCurrentOffsetSummary" class="hidden text-xl font-black theme-text mb-3 tracking-tight text-center">
+                    当前预设的XY偏移值为：X <span id="currentXOffsetDisplay">--</span> / Y <span id="currentYOffsetDisplay">--</span>
+                  </div>
                   <span class="text-sm text-gray-400 dark:text-gray-500">点击右上方打开校准模型按钮加载可视化校准网格</span>
                   <span class="text-sm text-gray-400 dark:text-gray-500">点击后请耐心等待3mf打开...</span>
                 </div>
@@ -1205,11 +1224,8 @@
     </div>
   </div>
 
-  <div id="contextMenu" class="context-menu hidden">
-    <div class="context-menu-item" id="contextMenuFavorite">
-      <span id="contextMenuFavoriteText">收藏此机型</span>
-    </div>
-  </div>
+  <div id="homeCatalogContextMenu" class="param-context-menu home-catalog-context-menu hidden"></div>
+  <input id="homeCatalogImageInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif" class="hidden">
 
   <div id="tooltip" class="tooltip hidden"></div>
 
@@ -1221,6 +1237,7 @@
   <script src="assets/js/updates.js"></script>
   <script src="assets/js/params.js"></script>
   <script src="assets/js/home.js"></script>
+  <script src="assets/js/home-layout-override.js"></script>
   <script src="assets/js/wizard.js"></script>
   <script src="assets/js/presets.js"></script>
   <script src="assets/js/ui-text.js"></script>

@@ -3,7 +3,20 @@ const { app, BrowserWindow, Notification, ipcMain, nativeTheme, shell } = requir
 const path = require('path');
 const fs = require('fs');
 const { processGcode } = require('./mkp_engine');
+const {
+  importHomeCatalogImage,
+  readHomeCatalog,
+  removeHomeCatalog,
+  saveHomeCatalog
+} = require('./catalog-store');
 const { readReleaseEditorState, saveReleaseEditorState, runReleaseMode } = require('./release-ops');
+const {
+  importDefaultCatalogImage,
+  readDefaultCatalogConfig,
+  readDefaultPreset,
+  saveDefaultCatalogConfig,
+  saveDefaultPreset
+} = require('./release-config-ops');
 const { exec } = require('child_process');
 const http = require('http');
 const https = require('https');
@@ -493,6 +506,46 @@ ipcMain.handle('save-release-info', async (event, payload) => {
   }
 });
 
+ipcMain.handle('read-release-config', async () => {
+  try {
+    return { success: true, data: readDefaultCatalogConfig(getReleaseRuntimeOptions()) };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('save-release-config-catalog', async (event, payload) => {
+  try {
+    return { success: true, data: saveDefaultCatalogConfig(payload || {}, getReleaseRuntimeOptions()) };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('import-release-config-image', async (event, payload) => {
+  try {
+    return { success: true, data: await importDefaultCatalogImage(payload || {}, getReleaseRuntimeOptions()) };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('read-release-config-preset', async (event, fileName) => {
+  try {
+    return { success: true, data: readDefaultPreset(fileName, getReleaseRuntimeOptions()) };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('save-release-config-preset', async (event, payload) => {
+  try {
+    return { success: true, data: saveDefaultPreset(payload || {}, getReleaseRuntimeOptions()) };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
 ipcMain.handle('run-release-build', async (event, mode) => {
   try {
     return { success: true, data: runReleaseMode(String(mode || '2'), getReleaseRuntimeOptions()) };
@@ -513,6 +566,41 @@ ipcMain.handle('open-release-path', async (event, target) => {
     const targetPath = mapping[String(target || 'cloud')] || mapping.cloud;
     await shell.openPath(targetPath);
     return { success: true, path: targetPath };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('read-home-catalog', async () => {
+  try {
+    return { success: true, data: readHomeCatalog(app.getPath('userData')) };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('save-home-catalog', async (event, payload) => {
+  try {
+    const filePath = saveHomeCatalog(app.getPath('userData'), payload || {});
+    return { success: true, path: filePath };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('reset-home-catalog', async () => {
+  try {
+    removeHomeCatalog(app.getPath('userData'));
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('import-home-catalog-image', async (event, payload) => {
+  try {
+    const filePath = await importHomeCatalogImage(app.getPath('userData'), payload || {});
+    return { success: true, path: filePath };
   } catch (error) {
     return { success: false, error: error.message };
   }
