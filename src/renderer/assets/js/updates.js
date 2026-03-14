@@ -566,6 +566,8 @@ window.toggleExpandMore = toggleExpandMore;
 window.handleRollback = handleRollback;
 
 const APP_UPDATE_PANEL_ID = 'mkp-app-update-panel';
+const APP_UPDATE_MODE_INIT_KEY = 'update_mode_initialized_v2';
+let appUpdatePanelHideTimer = null;
 
 function ensureAppUpdatePanel() {
   let panel = document.getElementById(APP_UPDATE_PANEL_ID);
@@ -573,7 +575,7 @@ function ensureAppUpdatePanel() {
 
   panel = document.createElement('div');
   panel.id = APP_UPDATE_PANEL_ID;
-  panel.className = 'fixed right-6 top-6 z-[10060] hidden w-[360px] max-w-[calc(100vw-32px)] rounded-2xl border border-gray-200 bg-white/96 p-4 shadow-[0_24px_60px_rgba(15,23,42,0.18)] backdrop-blur transition-all dark:border-[#333] dark:bg-[#1f1f20]/96';
+  panel.className = 'pointer-events-auto fixed right-6 top-6 z-[10060] hidden w-[380px] max-w-[calc(100vw-32px)] translate-y-[-12px] scale-[0.98] rounded-2xl border border-gray-200 bg-white/96 p-4 opacity-0 shadow-[0_24px_60px_rgba(15,23,42,0.18)] backdrop-blur transition-all duration-300 ease-out dark:border-[#333] dark:bg-[#1f1f20]/96';
   panel.innerHTML = `
     <div class="flex items-start gap-3">
       <div id="mkp-app-update-panel-icon" class="mt-0.5 flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 dark:bg-blue-500/12 dark:text-blue-300">
@@ -812,3 +814,309 @@ async function silentCheckForUpdate(mode, options = {}) {
 window.manualCheckAppUpdate = manualCheckAppUpdate;
 window.initUpdateModeSetting = initUpdateModeSetting;
 window.silentCheckForUpdate = silentCheckForUpdate;
+
+const APP_UPDATE_PANEL_V2_ID = 'mkp-app-update-panel';
+const APP_UPDATE_MODE_INIT_V2_KEY = 'update_mode_initialized_v2';
+let appUpdatePanelV2HideTimer = null;
+
+function ensureAppUpdatePanel() {
+  let panel = document.getElementById(APP_UPDATE_PANEL_V2_ID);
+  if (panel) {
+    return panel;
+  }
+
+  panel = document.createElement('div');
+  panel.id = APP_UPDATE_PANEL_V2_ID;
+  panel.className = 'pointer-events-auto fixed right-6 top-6 z-[10060] hidden w-[380px] max-w-[calc(100vw-32px)] translate-y-[-12px] scale-[0.98] rounded-2xl border border-gray-200 bg-white/96 p-4 opacity-0 shadow-[0_24px_60px_rgba(15,23,42,0.18)] backdrop-blur transition-all duration-300 ease-out dark:border-[#333] dark:bg-[#1f1f20]/96';
+  panel.innerHTML = `
+    <div class="flex items-start gap-3">
+      <div id="mkp-app-update-panel-icon-v2" class="mt-0.5 flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 dark:bg-blue-500/12 dark:text-blue-300">
+        <svg class="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+      </div>
+      <div class="min-w-0 flex-1">
+        <div id="mkp-app-update-panel-title-v2" class="text-sm font-bold text-gray-900 dark:text-gray-100">正在检查更新</div>
+        <div id="mkp-app-update-panel-desc-v2" class="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">正在连接云端版本清单...</div>
+        <div id="mkp-app-update-panel-meta-v2" class="mt-2 text-[11px] font-medium tracking-[0.01em] text-gray-400 dark:text-gray-500"></div>
+        <div class="mt-3 h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-white/8">
+          <div id="mkp-app-update-panel-bar-v2" class="h-full w-[16%] rounded-full bg-blue-500 transition-all duration-500"></div>
+        </div>
+      </div>
+      <button id="mkp-app-update-panel-close-v2" type="button" class="ml-1 inline-flex h-8 w-8 items-center justify-center rounded-xl text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-white/8 dark:hover:text-gray-200">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+  `;
+
+  document.body.appendChild(panel);
+  panel.querySelector('#mkp-app-update-panel-close-v2')?.addEventListener('click', () => {
+    hideAppUpdatePanel();
+  });
+  return panel;
+}
+
+function setAppUpdatePanelState(options = {}) {
+  const panel = ensureAppUpdatePanel();
+  const iconWrap = panel.querySelector('#mkp-app-update-panel-icon-v2');
+  const title = panel.querySelector('#mkp-app-update-panel-title-v2');
+  const desc = panel.querySelector('#mkp-app-update-panel-desc-v2');
+  const meta = panel.querySelector('#mkp-app-update-panel-meta-v2');
+  const bar = panel.querySelector('#mkp-app-update-panel-bar-v2');
+  if (!iconWrap || !title || !desc || !meta || !bar) {
+    return;
+  }
+
+  if (appUpdatePanelV2HideTimer) {
+    window.clearTimeout(appUpdatePanelV2HideTimer);
+    appUpdatePanelV2HideTimer = null;
+  }
+
+  const tone = options.tone || 'info';
+  const progress = Math.max(0, Math.min(100, Number(options.progress ?? 0)));
+  const iconMap = {
+    info: '<svg class="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>',
+    success: '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M5 13l4 4L19 7"/></svg>',
+    error: '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 8v4m0 4h.01M10.29 3.86l-7.5 13A1 1 0 003.65 18h16.7a1 1 0 00.86-1.5l-7.5-13a1 1 0 00-1.72 0z"/></svg>'
+  };
+  const toneClassMap = {
+    info: ['bg-blue-50 text-blue-600 dark:bg-blue-500/12 dark:text-blue-300', 'bg-blue-500'],
+    success: ['bg-emerald-50 text-emerald-600 dark:bg-emerald-500/12 dark:text-emerald-300', 'bg-emerald-500'],
+    error: ['bg-red-50 text-red-600 dark:bg-red-500/12 dark:text-red-300', 'bg-red-500']
+  };
+  const [iconClasses, barClass] = toneClassMap[tone] || toneClassMap.info;
+
+  iconWrap.className = `mt-0.5 flex h-10 w-10 items-center justify-center rounded-2xl ${iconClasses}`;
+  iconWrap.innerHTML = iconMap[tone] || iconMap.info;
+  title.textContent = options.title || '正在检查更新';
+  desc.textContent = options.desc || '';
+  meta.textContent = options.meta || '';
+  bar.className = `h-full rounded-full transition-all duration-500 ${barClass}`;
+  bar.style.width = `${progress}%`;
+  panel.classList.remove('hidden');
+  window.requestAnimationFrame(() => {
+    panel.classList.remove('translate-y-[-12px]', 'scale-[0.98]', 'opacity-0');
+    panel.classList.add('translate-y-0', 'scale-100', 'opacity-100');
+  });
+}
+
+function hideAppUpdatePanel(delayMs = 0) {
+  const panel = document.getElementById(APP_UPDATE_PANEL_V2_ID);
+  if (!panel) {
+    return;
+  }
+
+  const close = () => {
+    panel.classList.remove('translate-y-0', 'scale-100', 'opacity-100');
+    panel.classList.add('translate-y-[-12px]', 'scale-[0.98]', 'opacity-0');
+    appUpdatePanelV2HideTimer = window.setTimeout(() => {
+      panel.classList.add('hidden');
+      appUpdatePanelV2HideTimer = null;
+    }, 220);
+  };
+
+  if (delayMs > 0) {
+    if (appUpdatePanelV2HideTimer) {
+      window.clearTimeout(appUpdatePanelV2HideTimer);
+    }
+    appUpdatePanelV2HideTimer = window.setTimeout(close, delayMs);
+    return;
+  }
+
+  close();
+}
+
+function saveUpdateMode(mode) {
+  Logger.info(`Write variable: update_mode, v:${mode}`);
+  localStorage.setItem(APP_UPDATE_MODE_KEY, mode);
+  localStorage.setItem(APP_UPDATE_MODE_INIT_V2_KEY, 'true');
+  silentCheckForUpdate(mode, { force: true });
+}
+
+function initUpdateModeSetting() {
+  Logger.info('Read variable: update_mode');
+  let savedMode = localStorage.getItem(APP_UPDATE_MODE_KEY);
+  const hasInitialized = localStorage.getItem(APP_UPDATE_MODE_INIT_V2_KEY) === 'true';
+  if (!savedMode || !hasInitialized) {
+    savedMode = 'manual';
+    localStorage.setItem(APP_UPDATE_MODE_KEY, savedMode);
+    localStorage.setItem(APP_UPDATE_MODE_INIT_V2_KEY, 'true');
+  }
+
+  document.querySelectorAll('input[name="updateMode"]').forEach((radio) => {
+    radio.checked = radio.value === savedMode;
+  });
+
+  hydrateCachedAppUpdateBadge();
+  silentCheckForUpdate(savedMode);
+}
+
+async function silentCheckForUpdate(mode, options = {}) {
+  const cachedState = readAppUpdateState();
+  if (cachedState?.hasUpdate) {
+    applyAppUpdateBadge(compareVersionsFront(cachedState.latestVersion, normalizeAppVersion(APP_REAL_VERSION)) > 0);
+  }
+
+  const shouldSkipFetch = !options.force
+    && cachedState?.checkedAt
+    && (Date.now() - cachedState.checkedAt) < APP_UPDATE_CHECK_COOLDOWN_MS;
+
+  if (shouldSkipFetch) {
+    return;
+  }
+
+  try {
+    const manifest = await fetchAppManifestWithFallback();
+    await saveCloudManifestToLocal(manifest);
+
+    const currentVersion = await getCurrentAppVersion();
+    syncAppUpdateState(manifest, currentVersion);
+    globalVersions = parseManifestToUI(manifest, currentVersion);
+    renderVersions();
+  } catch (error) {
+    Logger.warn(`[静默更新] 检查失败: ${error.message}`);
+  }
+}
+
+async function manualCheckAppUpdate(btnElement) {
+  if (versionActionInFlight) {
+    return;
+  }
+
+  let resetEngine = null;
+  setVersionActionBusy(true, btnElement);
+  setAppUpdatePanelState({
+    title: '正在检查更新',
+    desc: '正在连接云端版本清单...',
+    meta: '准备读取远端版本信息',
+    progress: 16,
+    tone: 'info'
+  });
+
+  if (typeof setButtonStatus === 'function' && btnElement) {
+    const spinIcon = '<svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+    resetEngine = setButtonStatus(btnElement, '115px', '检查中...', spinIcon, 'btn-expand-theme');
+  }
+
+  try {
+    const remoteManifest = await fetchAppManifestWithFallback();
+    await saveCloudManifestToLocal(remoteManifest);
+
+    const currentAppVersion = await getCurrentAppVersion();
+    const remoteVersion = normalizeAppVersion(remoteManifest.latestVersion);
+    setAppUpdatePanelState({
+      title: '已获取云端版本',
+      desc: `检测到远端版本 v${remoteVersion}`,
+      meta: `当前 v${currentAppVersion} -> 远端 v${remoteVersion}`,
+      progress: 38,
+      tone: 'info'
+    });
+
+    globalVersions = parseManifestToUI(remoteManifest, currentAppVersion);
+    renderVersions();
+
+    const hasUpdate = syncAppUpdateState(remoteManifest, currentAppVersion);
+    if (!hasUpdate) {
+      if (resetEngine) {
+        resetEngine();
+      }
+      setAppUpdatePanelState({
+        title: '已是最新版本',
+        desc: `当前运行的 v${currentAppVersion} 已经是最新版本。`,
+        meta: `当前 v${currentAppVersion} 与远端一致`,
+        progress: 100,
+        tone: 'success'
+      });
+      hideAppUpdatePanel(1800);
+      return;
+    }
+
+    if (resetEngine) {
+      resetEngine();
+    }
+    const confirmed = await MKPModal.confirm({
+      title: `发现新版本 v${remoteVersion}`,
+      msg: `${remoteManifest.shortDesc || '常规体验优化与错误修复'}\n\n是否立即下载并应用热更新？`,
+      type: 'info',
+      confirmText: '立即更新',
+      cancelText: '稍后再说'
+    });
+
+    if (!confirmed) {
+      setAppUpdatePanelState({
+        title: '发现新版本',
+        desc: `已保留 v${remoteVersion} 提醒，左侧版本控制会显示红点。`,
+        meta: `当前 v${currentAppVersion} -> 新版 v${remoteVersion}`,
+        progress: 100,
+        tone: 'success'
+      });
+      hideAppUpdatePanel(1800);
+      return;
+    }
+
+    if (typeof setButtonStatus === 'function' && btnElement) {
+      const downIcon = '<svg class="animate-bounce w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>';
+      resetEngine = setButtonStatus(btnElement, '120px', '正在下载...', downIcon, 'btn-expand-theme');
+    }
+
+    setAppUpdatePanelState({
+      title: '正在下载更新',
+      desc: '补丁包下载中，请稍候...',
+      meta: `当前 v${currentAppVersion} -> 目标 v${remoteVersion}`,
+      progress: 62,
+      tone: 'info'
+    });
+
+    const updateResult = await window.mkpAPI.applyHotUpdate({
+      urls: buildPatchUrlCandidates(remoteManifest.downloadUrl),
+      expectedVersion: remoteVersion
+    });
+
+    if (!updateResult.success) {
+      throw new Error(`热更新失败：${updateResult.error}`);
+    }
+
+    if (resetEngine) {
+      resetEngine();
+    }
+    setAppUpdatePanelState({
+      title: '正在应用更新',
+      desc: `补丁已写入 v${updateResult.version || remoteVersion}，即将重启软件。`,
+      meta: '热更新补丁已应用，正在准备重启',
+      progress: 100,
+      tone: 'success'
+    });
+
+    window.setTimeout(() => {
+      if (window.mkpAPI.restartApp) {
+        window.mkpAPI.restartApp();
+      }
+    }, 1200);
+  } catch (error) {
+    if (resetEngine) {
+      resetEngine();
+    }
+    setAppUpdatePanelState({
+      title: '检查更新失败',
+      desc: error.message || '请稍后再试。',
+      meta: '可稍后再次手动检查，或查看网络与补丁地址',
+      progress: 100,
+      tone: 'error'
+    });
+    await MKPModal.alert({
+      title: '检查失败',
+      msg: error.message,
+      type: 'error'
+    });
+  } finally {
+    setVersionActionBusy(false);
+  }
+}
+
+window.saveUpdateMode = saveUpdateMode;
+window.initUpdateModeSetting = initUpdateModeSetting;
+window.silentCheckForUpdate = silentCheckForUpdate;
+window.manualCheckAppUpdate = manualCheckAppUpdate;

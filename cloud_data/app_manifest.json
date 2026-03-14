@@ -2,7 +2,7 @@
   "latestVersion": "0.2.9",
   "updateType": "hot_update",
   "downloadUrl": "https://gitee.com/MuCoreBenC/MKP_Support_Electron/raw/main/cloud_data/patch_v0.2.9.zip",
-  "forceUpdate": false,
+  "forceUpdate": true,
   "releaseDate": "2026-03-14",
   "shortDesc": "修复更新功能小红点提示",
   "canRollback": true,

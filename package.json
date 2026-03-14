@@ -30,15 +30,31 @@
   "build": {
     "appId": "com.mkp.support.e.app",
     "asar": false,
+    "compression": "maximum",
+    "electronLanguages": [
+      "zh-CN",
+      "en-US"
+    ],
     "directories": {
       "output": "dist"
     },
+    "files": [
+      "package.json",
+      "preload.js",
+      "src/**/*",
+      "!cloud_data{,/**}",
+      "!release_upload{,/**}",
+      "!references{,/**}",
+      "!scripts{,/**}",
+      "!dist{,/**}"
+    ],
     "extraResources": [
       {
         "from": "cloud_data",
         "to": "cloud_data",
         "filter": [
-          "**/*"
+          "**/*",
+          "!patch_v*.zip"
         ]
       }
     ],
